@@ -1,0 +1,327 @@
+/* General CSS Setup */
+:root {
+	--nav-height: 50px;
+	--input-height: 77px;
+}
+
+* {
+	margin: 0;
+	padding: 0;
+	box-sizing: border-box;
+}
+body {
+	background-color: white;
+	//font-family: "Ubuntu-Italic", "Lucida Sans", helvetica, sans;
+	font-family: "Lucida Sans", helvetica, sans;
+	//margin-bottom: 80px;
+	display: flex; /* Makes the body a flex container */
+	justify-content: center; /* Centers horizontally */
+	flex-direction: column;
+	//height: 100vh;
+	//align-items: center;
+}
+
+.talk-text, .input-field {
+    //font-family: "Ubuntu-Italic", "Lucida Sans", helvetica, sans-serif; /* Consistent font family */
+    font-family: "Lucida Sans", 'Arial', sans-serif, serif;
+    font-size: 16px; /* Example font size, adjust as needed */
+    line-height: 1.5;
+}
+
+.page-container {
+	display: flex;
+	flex-direction: column;
+	height: 100vh; /* full height of the viewport */
+	width: 100%;
+	justify-content: flex-start;
+	align-items: center;
+	//position: relative;
+	//height: calc(100vh - var(--nav-height));
+	//flex-grow: 1;
+}
+
+.middle-container {
+	display: flex;
+	//flex-grow: 1;
+	position: relative; /* Allows absolute positioning inside it */
+	justify-content: center;
+	align-items: flex-start;
+	//overflow: auto;
+	//margin-bottom: var(--nav-height);
+	//overflow-y: auto;
+	height: 100vh;
+	padding-bottom: 12px;
+	//padding-bottom: calc(var(--input-height) + var(--nav-height));
+	width: 100%;
+	//max-width: 590px;
+}
+
+.message-scroll-container {
+	display: flex;
+	//flex-grow: 1;
+	position: relative; /* Allows absolute positioning inside it */
+	justify-content: center;
+	align-items: flex-start;
+	//overflow: auto;
+	//margin-bottom: var(--nav-height);
+	overflow-y: auto;
+	//height: calc(100vh - var(--nav-height) - var(--input-height));
+	height: calc(100vh - var(--nav-height) - 24px);
+	height: calc(100vh - var(--nav-height) - 18px);
+	padding-bottom: 41px;
+	//padding-bottom: calc(var(--input-height) + var(--nav-height));
+	width: 100%;
+	max-width: 590px;
+	padding-top: 15px;
+}
+
+.chat-container {
+	//flex: 1 1 auto;
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	align-items: center;
+	align-items: flex-start;
+	//width: 95%;
+	width: 100%;
+	//max-width: 720px;
+	margin-left: 0px;
+	padding-left: 0px;
+	//flex-grow: 1;
+	//overflow-y: auto;
+	//height: calc(100vh - var(--nav-height) - var(--input-height));
+	//max-height: calc(100vh - var(--nav-height) - var(--input-height));
+	//padding-bottom: calc(var(--input-height) + var(--nav-height));
+	//padding-bottom: var(--nav-height);
+}
+
+.input-container {
+	position: fixed;
+	bottom: var(--nav-height);
+	left: 0; /* Ensures it starts from the left edge */
+	//right: 0;
+	display: flex;
+	justify-content: center;
+	align-items: flex-end;
+	width: 100%;
+	//margin-top: 30px; /* Pushes the input container to the bottom */
+	background: rgb(255,255,255);
+	background: linear-gradient(180deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.4) 100%);
+}
+
+.navigation-bar {
+	position: fixed;
+	bottom: 0;
+	left: 0;
+	height: var(--nav-height); /* Set height as needed */
+	width: 100%;
+	background-color: #ffffff;
+	z-index: 100;
+	flex-shrink: 0;
+}
+
+.response-container {
+  display: flex;
+  justify-content: center; /* Center content horizontally */
+  align-items: center; /* Center content vertically */
+  width: 100%; /* Ensures the container takes up full width */
+  flex-wrap: wrap; /* Allows items to wrap to the next line */
+  margin-bottom: 0px;
+  flex-direction: column;
+  max-width: 100%;
+  margin-left: 0px;
+  padding-left: 0px;
+}
+
+.user-name, .character-name {
+	color: gray;
+	font-family: verdana;
+	font-size: 14px;
+	align-items: center;
+	width: 100%; 
+	margin: 0px 2%; /*match button-container width*/
+	max-width: 95%;
+}
+
+.user-name{
+	//align-self: flex-start;
+	padding: 0px 0vw 0px 2%;
+}
+
+.character-name{
+	//align-self: flex-start;
+	text-align: right; 
+	padding: 0px 2% 0px 0vw;
+}
+
+.message-container {
+  display: flex;
+  align-items: center;
+  margin: 0px 0% 15px; /*adjusting percentage moves out from center was using 2, now might be hitting max-width*/
+  //width: 60%; /* Adjusted width to accommodate two items in a row */
+  width: 100%;
+  padding: 0px;
+  max-width: 100%;
+  margin-left: 0px;
+  padding-left: 0px;
+}
+
+.left-align {
+  justify-content: flex-start; /* Aligns items to the left */
+  margin-left: 00%;
+  width: 100%;
+  max-width: 100%;
+}
+
+.right-align {
+  justify-content: flex-end; /* Aligns items to the right */
+  margin-right: 0%;
+  width: 100%;
+  //max-width: 100%;
+}
+
+.chat-bubble, .user-chat-bubble {
+	display: flex;
+	align-items: center; /* Aligns content vertically */
+	//width: max-content;
+	max-width: 100%;
+	background: linear-gradient(189deg, rgba(185,166,191,1) 0%, rgba(169,128,184,1) 50%, rgba(185,166,191,1) 100%);
+	background: linear-gradient(189deg, rgba(185,166,191,1) 0%, rgba(92,119,192,1) 50%, rgba(185,166,191,1) 100%);
+	background: linear-gradient(184deg, rgba(185,166,191,1) 0%, rgba(101,126,193,1) 50%, rgba(185,166,191,1) 100%);
+	background: linear-gradient(180deg, rgba(158,168,196,1) 0%, rgba(185,166,191,1) 18%, rgba(185,166,191,1) 82%, rgba(158,168,196,1) 100%);
+	background: linear-gradient(180deg, rgba(158,168,196,1) 0%, rgba(185,166,191,1) 8%, rgba(185,166,191,1) 92%, rgba(158,168,196,1) 100%);
+	background: linear-gradient(180deg, rgba(158,168,196,1) 0%, rgba(185,166,191,1) 10%, rgba(185,166,191,1) 90%, rgba(158,168,196,1) 100%);
+	background: #b9a6bf;
+	//background: rgb(205, 179, 213);
+	background: rgb(196, 178, 201);
+	color: black;
+	vertical-align: top; /* Aligns the inline-block elements at their top edges */
+	//max-width: 650px;
+	margin-left: 10px; /* Adjust as needed */
+	margin: 10px 10px 10px 10px;
+}
+
+.user-chat-bubble {
+	background: rgb(209, 195, 213);
+	//background: rgb(216, 203, 221);
+}
+.border {
+  border: 3px solid #666;
+}
+
+.round {
+  border-radius: 1px;
+  -webkit-border-radius: 9px;
+  -moz-border-radius: 10px;
+  //max-width: 100%;
+}
+
+/* talk bubble contents */
+.talk-text {
+  padding: 1em;
+  text-align: left;
+  line-height: 1.5em;
+  width: 100%;
+  max-width: 100%;
+}
+
+.talk-text p {
+  /* remove webkit p margins */
+  -webkit-margin-before: 0em;
+  -webkit-margin-after: 0em;
+  white-space: pre-wrap;
+  width: 100%;
+  max-width: 100%;
+}
+
+.character-icon {
+  /*padding: 1em;  Adds padding inside the button */
+  line-height: 1.5em;
+  background-color: #4CAF50; /* Sets a green background color */
+  color: white; /* Sets the text color to white */
+  border: none; /* Removes the default border */
+  cursor: pointer; /* Changes the cursor to a pointer when hovering over the button */
+  border-radius: 50px; /* Gives the button rounded corners */
+  font-size: 16px; /* Sets the font size */
+  align-self: flex-start; /* Align button to the top of the row */
+  margin: 13px 0px;
+  width: 50px;
+  height: 50px; 
+  min-width: 55px;
+  min-height: 55px;
+  padding: 0px;
+}
+
+.character-icon img {
+	align-self: flex-start;
+	margin: 0px;
+  border-radius: 50px;
+  width: 55px;
+  height: 55px; 
+  //display: block;
+}
+
+.character-icon img:hover {
+  //background-color: #45a049;
+  filter: brightness(80%);
+}
+.submit-button {
+	/*padding: 1em;  Adds padding inside the button */
+	line-height: 1.5em;
+	background-color: #4CAF50; /* Sets a green background color */
+	background-color: rgba(169,128,184,1);
+	color: white; /* Sets the text color to white */
+	border: none; /* Removes the default border */
+	cursor: pointer; /* Changes the cursor to a pointer when hovering over the button */
+	border-radius: 10px; /* Gives the button rounded corners */
+	font-size: 16px; /* Sets the font size */
+	align-self: flex-end; /* Align button to the top of the row */
+	margin: 0 0 calc(var(--input-height) / 2) 10px;
+	width: 90px; /* Fixed width */
+	height: 40px; /* Fixed height */
+}
+
+
+.input-field {
+	//background: rgba(206, 247, 239, 1);
+	background: rgba(185,166,191,.2);
+	background: rgb(217, 207, 220);
+	border: 3px solid #4CAF50;
+	border: 3px solid rgba(169,128,184,1);
+	border-radius: 15px;
+	padding: 15px;
+	width: 60%; /* Adjust as needed */
+	max-width: 700px; /* Adjust as needed */
+	margin-bottom: 20px; /* Adjust as needed */
+	line-height: 1.3;
+	resize: none;
+	color: black;
+	box-sizing: border-box;
+	resize: none;
+	outline: none;
+	//height: 50px;
+}
+
+	.input-field::placeholder {
+		color: gray; /* Placeholder text color */
+	}
+
+
+::-webkit-scrollbar {
+    width: 12px; /* scrollbar width */
+    height: 12px; /* scrollbar height for horizontal scrollbars */
+    background-color: rgba(0, 0, 0, 0); /* scrollbar track color */
+}
+
+/* Styles the draggable part of the scrollbar */
+::-webkit-scrollbar-thumb {
+    background-color: #777; /* scrollbar color */
+    border-radius: 6px; /* roundness of the scrollbar */
+    border: 3px solid #f2f2f2; /* creates a padding around the thumb */
+}
+
+/* Styles the part of the scrollbar track that's not covered by the thumb */
+::-webkit-scrollbar-track {
+    background-color: rgba(0, 0, 0, 0); /* color of the rest of the scrollbar track */
+    border-radius: 15px; /* roundness of the track */
+}

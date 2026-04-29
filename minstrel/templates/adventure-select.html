@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<body class="default-body">
+    <div class="page-container">
+        <div class="middle-container">
+            <!-- <p class="adventure-select-title">Choose a World</p> -->
+            <div class="adventure-container">
+                <div class="adventure-portal-header">
+                    <div class="adventure-portal-header-leading" aria-hidden="true"></div>
+                    <p class="adventure-select-title">Adventure Worlds</p>
+                    <button type="button"
+                            class="adventure-menu-button"
+                            aria-label="Adventure menu"
+                            aria-expanded="false"
+                            aria-haspopup="true"
+                            aria-controls="adventure-menu">
+                        <span class="adventure-menu-icon" aria-hidden="true">
+                            <span></span><span></span><span></span>
+                        </span>
+                    </button>
+                </div>
+                <div class="adventure-select-scroll">
+                    <div class="adventure-select">
+                    </div>
+                </div>
+                <div class="adventure-portal-footer">
+                    <button type="button" class="new-adventure-button" aria-label="Create Adventure">
+                        <span aria-label="Create Adventure" aria-hidden="true">+</span>
+                    </button>
+                    <button type="button" class="new-world-button" hidden aria-label="Create World">
+                        <span aria-label="Create World" aria-hidden="true">+</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+
+    </div>
+    <div class="navigation-bar">
+        <!-- Navigation links here -->
+    </div>
+    <div id="adventure-menu" class="adventure-menu" role="menu" tabindex="-1">
+        <button type="button" id="adventure-menu-view-worlds" class="adventure-settings-menu-button" role="menuitem">View worlds</button>
+        <button type="button" id="adventure-menu-view-adventures" class="adventure-settings-menu-button" role="menuitem" hidden>View adventures</button>
+    </div>
+    <div class="adventure-settings-menu" role="menu" tabindex="-1">
+        <button id="invite-link-button" class="adventure-settings-menu-button" role="menuitem">Invite Link</button>
+        <button id="party-invite-link-button" class="adventure-settings-menu-button" role="menuitem">Party Invite Link</button>
+        <button id="delete-world-button" class="adventure-settings-menu-button" role="menuitem">Delete</button>
+        <button id="close-menu-accessibility" class="sr-only" role="menuitem">Close Settings</button>
+    </div>
+    <p id="clipStatus" aria-live="assertive" class="sr-only"></p>
+
+    <div class="confirm-modal-background" hidden aria-hidden="true">
+        <div class="confirm-modal" role="dialog" aria-modal="true" aria-labelledby="world-delete-confirm-title">
+            <p id="world-delete-confirm-title" class="confirm-title">Delete world?</p>
+            <p class="confirm-text">
+                Are you sure you want to delete this world? This action cannot be undone.
+            </p>
+            <div class="confirm-buttons">
+                <button class="confirm-accept">Delete</button>
+                <button class="confirm-cancel">Cancel</button>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,23 @@
+User-agent: *
+Allow: /
+Allow: /static/images/
+Allow: /world-invite
+
+# Block resource files that bots don't need
+Disallow: /static/css/
+Disallow: /static/icons/
+Disallow: /static/js/
+
+# Block authentication and API endpoints
+Disallow: /sign-in
+Disallow: /register
+Disallow: /verify
+Disallow: /logout
+Disallow: /ws
+Disallow: /world-page/
+
+# Block log files and admin areas
+Disallow: *.log
+Disallow: /app.log
+
+Sitemap: https://minstrelai.com/sitemap.xml 

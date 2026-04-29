@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <!-- SEO Meta Tags -->
+    <title>Minstrel AI</title>
+    <meta name="description" content="Create immersive AI-powered virtual worlds and interactive adventures. Join collaborative storytelling experiences with advanced AI characters and dynamic environments.">
+    <meta name="keywords" content="Minstrel, AI worlds, interactive storytelling, virtual adventures, AI characters, collaborative gaming, procedural generation, text-based RPG, multiverse, metaverse">
+    <meta name="author" content="Minstrel AI">
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="https://minstrelai.com/">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://minstrelai.com/">
+    <meta property="og:title" content="Minstrel AI">
+    <meta property="og:description" content="Create immersive AI-powered virtual worlds and interactive adventures. Join collaborative storytelling experiences with advanced AI characters and dynamic environments.">
+    <meta property="og:image" content="https://minstrelai.com/static/images/world_image.png">
+    <meta property="og:site_name" content="Minstrel AI">
+    
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:url" content="https://minstrelai.com/">
+    <meta property="twitter:title" content="Minstrel AI">
+    <meta property="twitter:description" content="Create immersive AI-powered virtual worlds and interactive adventures. Join collaborative storytelling experiences with advanced AI characters and dynamic environments.">
+    <meta property="twitter:image" content="https://minstrelai.com/static/images/world_image.png">
+
+    <!-- PWA Meta Tags -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta name="csp-nonce" content="{{ nonce }}">
+    <meta name="theme-color" content="#8c6d94">
+
+    <!-- Icons and Manifest -->
+    <link rel="apple-touch-icon" href="/static/icons/icon-192x192.png">
+    <link rel="manifest" href="/manifest.json">
+    <link rel="icon" type="image/x-icon" href="/static/images/favicon.ico">
+
+    <!-- Stylesheets -->
+    <link rel="stylesheet" href="{{ url_for('static', path='/css/styles.css') }}?v={{ timestamp }}">
+    <link rel="stylesheet" href="{{ url_for('static', path='/css/register-styles.css') }}?v={{ timestamp }}">
+    <link rel="stylesheet" href="{{ url_for('static', path='/css/sign-in-styles.css') }}?v={{ timestamp }}">
+    
+    <!-- Scripts -->
+    <script type="module" src="{{ url_for('static', path='/js/app.js') }}?v={{ timestamp }}"></script>
+    <script src="https://accounts.google.com/gsi/client" async></script>
+    
+    <!-- Structured Data -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "Minstrel AI",
+        "description": "Create immersive AI-powered virtual worlds and interactive adventures. Join collaborative storytelling experiences with advanced AI characters and dynamic environments.",
+        "url": "https://minstrelai.com",
+        "applicationCategory": "GameApplication",
+        "operatingSystem": "Web Browser",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "USD"
+        },
+        "creator": {
+            "@type": "Organization",
+            "name": "Minstrel AI"
+        }
+    }
+    </script>
+</head>
+<body>
+</body>
+</html>

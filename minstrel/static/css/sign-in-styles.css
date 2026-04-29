@@ -1,0 +1,352 @@
+/* General CSS Setup */
+body.sign-in-body * {
+    //prevent body * settings in styles.css from taking effect;
+    margin: initial; /* Resets the margin to default */
+    padding: initial; /* Resets the padding to default */
+    box-sizing: content-box;
+}
+
+body.sign-in-body {
+    //background-color: white;
+    //font-family: "Ubuntu-Italic", "Lucida Sans", helvetica, sans;
+    font-family: "Lucida Sans", helvetica, sans;
+    //margin-bottom: 80px;
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    background-color: #f8f8f9;
+    background-color: #f8f9f9;
+    overflow: hidden;
+	//display: flex;
+    //justify-content: center;
+}
+
+    body.sign-in-body ::-webkit-scrollbar {
+        width: 12px; /* scrollbar width */
+        height: 12px; /* scrollbar height for horizontal scrollbars */
+        background-color: rgba(0, 0, 0, 0); /* scrollbar track color */
+    }
+
+/* Styles the draggable part of the scrollbar */
+    body.sign-in-body ::-webkit-scrollbar-thumb {
+        background-color: #777; /* scrollbar color */
+        border-radius: 6px; /* roundness of the scrollbar */
+        border: 3px solid #f2f2f2; /* creates a padding around the thumb */
+    }
+
+/* Styles the part of the scrollbar track that's not covered by the thumb */
+    body.sign-in-body ::-webkit-scrollbar-track {
+        background-color: rgba(0, 0, 0, 0); /* color of the rest of the scrollbar track */
+        border-radius: 15px; /* roundness of the track */
+    }
+
+body.sign-in-body .input-container {
+    //position: fixed; /* Fix the position relative to the viewport */
+    //bottom: 70%; /* Align at the bottom */
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    width: 100%;
+}
+
+body.sign-in-body .entry-container {
+    width: 49vw;
+    max-width: 276px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    margin-right: 42px;
+    margin-right: 75px;
+    margin-bottom: 4px;
+}
+
+body.sign-in-body .registration-field {
+    font-size: 16px;
+    border-style: solid;
+    border-width: 4px 6px;
+    border-color: black;
+    border-radius: 1px;
+    padding: 4px 6px;
+    width: 62vw; /* Adjust as needed */
+    max-width: 276px; /* Adjust as needed */
+    //margin-bottom: 20px; /* Adjust as needed */
+    line-height: 1.3;
+    resize: none;
+    //color: gray;
+    box-sizing: border-box;
+    resize: none;
+    outline: none;
+    //height: 50px;
+    background: rgba(255,255,255,0.95);
+}
+
+body.sign-in-body .next-button {
+    /*padding: 1em;  Adds padding inside the button */
+    line-height: 1.5em;
+    background-color: #b08ccc; /* Sets a green background color */
+    color: white; /* Sets the text color to white */
+    border: none; /* Removes the default border */
+    cursor: pointer; /* Changes the cursor to a pointer when hovering over the button */
+    border-radius: 10px; /* Gives the button rounded corners */
+    font-size: 16px; /* Sets the font size */
+    align-self: center; /* Align button to the top of the row */
+    margin: 0px 0px 0px 20px;
+    width: 54px; /* Fixed width */
+    flex: 0 0 54px; /* Prevent flex from changing visual width */
+    height: 40px; /* Fixed height */
+    //margin-bottom: 25px;
+    margin-right: 28px;
+}
+
+    body.sign-in-body .registration-container {
+        display: flex;
+        flex-direction: column;
+        //justify-content: center;
+        //position: fixed;
+        align-items: center;
+        //bottom: 70%;
+        height: 100vh; /* Full viewport height */
+        //margin-top: 30%;
+        //width: 500px;
+        width: 100%;
+        z-index: 0;
+        //max-width: 350px;
+        margin-right: 13vw;
+    }
+
+        body.sign-in-body .registration-container p {
+            margin-top: 5px;
+            margin-bottom: 0px;
+        }
+
+        body.sign-in-body .registration-container::before {
+            content: "";
+            display: block;
+            height: 20%; /* This empty block takes up the first 30% of the container */
+        }
+body.sign-in-body h1 {
+    font-size: 3.1vh;
+    transform: scaleY(1.18); /* Scales the text vertically by 20% */
+    margin-right: 132px;
+    margin-right: 122px;
+    margin-bottom: 18px;
+    //width: 70%;
+}
+
+    body.sign-in-body .top-image {
+        position: fixed;
+        bottom: 100;
+        width: 100%;
+        height: auto;
+        z-index: -1;
+        max-width: 350px;
+    }
+
+body.sign-in-body .bottom-image {
+        position: fixed;
+        bottom: 0;
+        right: 0;
+        /* original, scale up blurry wide but changes size nicely when expanding*/
+        width: 79%;
+        max-width: 350px; /*if aspect ratio less than 1.778(vertical 1920x1080), tablets*/
+        /*scale down instead of up */
+        width: 100%;
+        max-width: 280px;
+        height: auto;
+        z-index: -1;
+    }
+
+
+    body.sign-in-body #appleid-signin, .apple-signin-button {
+        z-index: 100;
+        //height: 50px;
+        //width: 40px;
+        width: 47px;
+        height: 47px;
+        background: none;
+        border: 1.3px solid black;
+        -webkit-border-radius: 20px;
+        border-radius: 38px;
+    }
+
+    body.sign-in-body .apple-signin-img {
+        width: 47px;
+        height: 47px;
+    }
+
+    body.sign-in-body .gsi-material-button {
+        -moz-user-select: none;
+        -webkit-user-select: none;
+        -ms-user-select: none;
+        -webkit-appearance: none;
+        background-color: WHITE;
+        background-image: none;
+        background-size: contain;
+        border: 1.3px solid black;
+        -webkit-border-radius: 20px;
+        border-radius: 38px;
+        -webkit-box-sizing: border-box;
+        box-sizing: border-box;
+        color: #1f1f1f;
+        cursor: pointer;
+        font-family: 'Roboto', arial, sans-serif;
+        font-size: 14px;
+        letter-spacing: 0.25px;
+        outline: none;
+        overflow: hidden;
+        padding: 0;
+        text-align: center;
+        -webkit-transition: background-color .218s, border-color .218s, box-shadow .218s;
+        transition: background-color .218s, border-color .218s, box-shadow .218s;
+        vertical-align: middle;
+        white-space: nowrap;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 47px;
+        width: 47px;
+        max-width: 400px;
+        min-width: min-content;
+        z-index: 100;
+    }
+
+    body.sign-in-body .social-signin-container {
+        position: fixed;
+        left: 5%;
+        bottom: 40.8%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 12px;
+    }
+
+        body.sign-in-body .gsi-material-button .gsi-material-button-icon {
+            height: 24px;
+            margin-right: 12px;
+            min-width: 20px;
+            width: 24px;
+            margin: 0;
+            padding: 11px;
+            z-index: 100;
+        }
+
+        body.sign-in-body .gsi-material-button .gsi-material-button-content-wrapper {
+            -webkit-align-items: center;
+            align-items: center;
+            display: flex;
+            -webkit-flex-direction: row;
+            flex-direction: row;
+            -webkit-flex-wrap: nowrap;
+            flex-wrap: nowrap;
+            height: 100%;
+            justify-content: space-between;
+            position: relative;
+            width: 100%;
+            z-index: 100;
+        }
+
+        body.sign-in-body .gsi-material-button .gsi-material-button-contents {
+            -webkit-flex-grow: 1;
+            flex-grow: 1;
+            font-family: 'Roboto', arial, sans-serif;
+            font-weight: 500;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            vertical-align: top;
+            z-index: 100;
+        }
+
+        body.sign-in-body .gsi-material-button .gsi-material-button-state {
+            -webkit-transition: opacity .218s;
+            transition: opacity .218s;
+            bottom: 0;
+            left: 0;
+            opacity: 0;
+            position: absolute;
+            right: 0;
+            top: 0;
+            z-index: 100;
+        }
+
+        body.sign-in-body .gsi-material-button:disabled {
+            cursor: default;
+            background-color: #ffffff61;
+            border-color: #1f1f1f1f;
+            z-index: 100;
+        }
+
+            body.sign-in-body .gsi-material-button:disabled .gsi-material-button-contents {
+                opacity: 38%;
+            }
+
+            body.sign-in-body .gsi-material-button:disabled .gsi-material-button-icon {
+                opacity: 38%;
+            }
+
+        body.sign-in-body .gsi-material-button:not(:disabled):active .gsi-material-button-state,
+        body.sign-in-body .gsi-material-button:not(:disabled):focus .gsi-material-button-state {
+            background-color: #303030;
+            opacity: 12%;
+            z-index: 100;
+        }
+
+        body.sign-in-body .gsi-material-button:not(:disabled):hover {
+            -webkit-box-shadow: 0 1px 2px 0 rgba(60, 64, 67, .30), 0 1px 3px 1px rgba(60, 64, 67, .15);
+            box-shadow: 0 1px 2px 0 rgba(60, 64, 67, .30), 0 1px 3px 1px rgba(60, 64, 67, .15);
+            z-index: 100;
+        }
+
+            body.sign-in-body .gsi-material-button:not(:disabled):hover .gsi-material-button-state {
+                background-color: #303030;
+                opacity: 8%;
+                z-index: 100;
+            }
+
+body.sign-in-body p a {
+    color: #4183c4;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+/* Hover / active feedback for primary auth action */
+body.sign-in-body .next-button:hover {
+    filter: brightness(0.96);
+}
+
+body.sign-in-body .next-button:active {
+    filter: brightness(0.9);
+    transform: translateY(1px);
+}
+
+/* Hover / active feedback for "Sign Up" link */
+body.sign-in-body #signup-link:hover {
+    text-decoration: underline;
+}
+
+body.sign-in-body #signup-link:active {
+    color: #2c5fa0;
+}
+
+
+    body.sign-in-body .entry-label {
+        align-self: flex-start;
+        margin: 0 0 4px 0;
+        color: black;
+        //font-weight: bold;
+    }
+
+    body.sign-in-body .post-text {
+        margin-left: 20px;
+    }
+
+    body.sign-in-body .status-message {
+        color: #d42600;
+        color: #ff5656;
+        align-self: flex-start;
+        margin-left: 14vw;
+        margin-left: 14vw;
+        min-height: 20px;
+        visibility: visible;
+    }
+
+

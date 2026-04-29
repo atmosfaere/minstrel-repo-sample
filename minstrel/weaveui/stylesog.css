@@ -1,0 +1,25 @@
+#draggable-box {
+    width: 300px;
+    border: 2px solid #333;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+#header {
+    background-color: #333;
+    color: white;
+    padding: 10px;
+    cursor: move; /* Cursor indicates it’s draggable */
+}
+
+#body {
+    padding: 10px;
+    background-color: #f4f4f4;
+}
+
+input[type="text"] {
+    width: 100%;
+    padding: 8px;
+    margin-top: 5px;
+    box-sizing: border-box; /* Includes padding and border in the element's total width */
+}

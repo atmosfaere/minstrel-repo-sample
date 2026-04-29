@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<body>
+    <div class="page-container">
+        <div class="middle-container">
+            <div class="message-scroll-container">
+                <div class="chat-container"></div>
+            </div>
+        </div>
+        <div class="control-area">
+            <div class="control-container">
+                <button type="button" id="simulation-mode-button" aria-label="simulation" class="control-button">Sim</button>
+                <button type="button"
+                        class="world-index-button"
+                        aria-expanded="false"
+                        aria-haspopup="true"
+                        aria-controls="world-index"
+                        aria-label="World Builder">
+                    <img src="" alt="">
+                </button>
+            </div>
+            <div class="input-container">
+                <textarea name="userMessage" class="input-field" placeholder="Type something..."></textarea>
+                <button type="button" class="submit-button">Send</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="world-loading-overlay" role="status" aria-live="polite" aria-label="Loading world" aria-busy="true">
+        <div class="world-loading-content">
+            <div class="world-loading-header">
+                <p class="world-loading-title">Loading world...</p>
+                <div class="world-loading-icon" aria-hidden="true">
+                    <span class="world-loading-icon-glyph">⚙</span>
+                </div>
+            </div>
+            <p class="world-loading-subtitle">
+                Readying environment, fetching history, waking up characters...
+            </p>
+            <div class="loading-bar">
+                <div class="loading-bar-fill"></div>
+            </div>
+            <p class="world-loading-timer-text">
+                <span class="loading-timer">0.0s</span> elapsed
+            </p>
+        </div>
+    </div>
+    <div class="navigation-bar">
+        <!-- Navigation links here -->
+    </div>
+
+    <div class="world-index-background" hidden></div>
+
+    <div class="world-index"  hidden></div>
+
+    <div class="player-settings-menu" id="player-settings-menu" role="menu" tabindex="-1">
+        <ul class="menu-list">
+            <li role="menuitem">
+                <button id="player-leave-party-button" class="character-settings-menu-button">Leave Party</button>
+            </li>
+            <li role="menuitem">
+                <button id="player-add-icon-button" class="character-settings-menu-button">Add Icon</button>
+            </li>
+            <li role="menuitem">
+                <button id="player-add-friend-button" class="character-settings-menu-button">Add Friend</button>
+            </li>
+            <li role="menuitem" class="sr-only">
+                <button id="close-player-menu-accessibility" class="sr-only">Close Settings</button>
+            </li>
+        </ul>
+    </div>
+
+    <div class="character-settings-menu" id="character-settings-menu" role="menu" tabindex="-1">
+        <ul class="menu-list">
+            <li role="menuitem">
+                <button id="profile-button" class="character-settings-menu-button">View Entry</button>
+            </li>
+            <li role="menuitem">
+                <button id="instruction-button" class="character-settings-menu-button">Instruction</button>
+            </li>
+            <li role="menuitem" aria-haspopup="true" aria-expanded="false">
+                <button id="simulation-button"
+                        class="character-settings-menu-button"
+                        aria-controls="simulation-content"
+                        aria-expanded="false">
+                    Simulation
+                </button>
+
+                <div id="simulation-content"
+                     class="simulation-content"
+                     role="region"
+                     aria-labelledby="simulation-button"
+                     hidden>
+                    <label id="simulation-toggle-label" for="simulation-toggle" class="sub-menu-label">Off/On</label>
+                    <div id="simulation-toggle"
+                         class="toggle-slider"
+                         role="switch"
+                         aria-checked="false"
+                         aria-live="polite"
+                         aria-labelledby="simulation-toggle-label"
+                         tabindex="0">
+                    </div>
+
+                    <label for="simulation-type" class="sub-menu-label">Simulate While:</label>
+                    <div class="simulation-type-switcher">
+                        <button id="previous-simulation-button"
+                                aria-label="Previous simulation type">
+                            &#9664;
+                        </button>
+
+                        <span id="simulation-type"
+                              class="simulation-type"
+                              aria-live="polite">
+                            Always
+                        </span>
+
+                        <button id="next-simulation-button"
+                                aria-label="Next simulation type">
+                            &#9654;
+                        </button>
+                    </div>
+
+                    <label for="simulation-frequency" class="sub-menu-label">Frequency:</label>
+                    <select id="simulation-frequency" class="simulation-frequency">
+                        <option>30 sec</option>
+                        <option>1 min</option>
+                        <option>5 min</option>
+                        <option>10 min</option>
+                        <option>20 min</option>
+                        <option>30 min</option>
+                        <option>1 hour</option>
+                        <option>2 hours</option>
+                        <option>10 times a day</option>
+                        <option>6 times a day</option>
+                        <option>3 times a day</option>
+                        <option>Twice a day</option>
+                        <option>Once a day</option>
+                        <option>Once a week</option>
+                        <option>Continuous</option>
+                    </select>
+                </div>
+            </li>
+            <li role="menuitem">
+                <button id="add-icon-button" class="character-settings-menu-button">Add Icon</button>
+            </li>
+            <li role="menuitem" class="sr-only">
+                <button id="close-chat-menu-accessibility" class="sr-only">Close Settings</button>
+            </li>
+        </ul>
+    </div>
+
+    <div id="chat-settings-menu" role="menu" tabindex="-1" class="sr-only">
+        <ul>
+            <li role="menuitem" class="sr-only">
+                <button id="add-instructions-button" class="sr-only">Add Instructions</button>
+            </li>
+        </ul>
+    </div>
+
+    <div id="sr-only-form" class="sr-only" role="dialog" aria-labelledby="sr-instructions-label">
+        <label id="sr-instructions-label" for="sr-instructions">Enter your instructions:</label>
+        <input type="text" id="sr-instructions" name="instructions" aria-describedby="sr-instructions-helper">
+        <p id="sr-instructions-helper" class="visually-hidden">Press Save to update your instructions.</p>
+        <button id="sr-save-button">Save</button>
+    </div>
+</body>
+</html>

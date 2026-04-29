@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<body>
+    <div class="page-container">
+        <div class="middle-container">
+
+            <div class="menu-container">
+                <div class="world-page">
+                    <button type="button" class="back-arrow" aria-label="Back to previous page">←</button>
+                    <!-- <img src="world_image.png" alt="Default World Image" class="world-page-image"> -->
+                    <h1 class="world-page-name">Make a New World</h1>
+                    <p class="world-page-titles">World Name:</p>
+                    <textarea class="world-info-field" id="world-name" type="text" aria-label="World Name" placeholder="Enter World Name..."></textarea>
+
+                    <p class="world-page-titles">Summary:</p>
+                    <textarea class="world-info-field" id="world-summary" type="text" aria-label="World Summary" placeholder="Enter World Summary (Optional)..."></textarea>
+                    <p class="world-page-titles">Character Name:</p>
+                    <textarea class="world-info-field" id="character-name" type="text" aria-label="Character Name" placeholder="Enter Character Name..."></textarea>
+                    <p class="world-page-titles">Character Summary:</p>
+                    <textarea class="world-info-field" id="character-summary" type="text" aria-label="Character Summary" placeholder="Enter Character Summary (Optional)..."></textarea>
+
+                    <!-- Advanced Section -->
+                    <div class="advanced-section">
+                        <button type="button" class="world-page-advanced-title" id="advanced-toggle">
+                            Advanced <span class="dropdown-arrow rotated">▼</span>
+                        </button>
+                        <div class="advanced-content" id="advanced-content" style="display: none;">
+                            <!-- World Settings -->
+                            <div class="settings-group">
+                                <p class="world-page-titles">World Settings:</p>
+                                
+                                <div class="setting-item">
+                                    <label class="setting-label" id="add-player-label">Add New Players:</label>
+                                    <select class="setting-dropdown" id="add-player" aria-labelledby="add-player-label">
+                                        <option value="main_party" selected>main party</option>
+                                        <option value="solo_party">solo party</option>
+                                    </select>
+                                </div>
+
+                                <div class="setting-item">
+                                    <label class="setting-label" id="multiplayer-label">Multiplayer:</label>
+                                    <select class="setting-dropdown" id="multiplayer" aria-labelledby="multiplayer-label">
+                                        <option value="party_only">party only / solo</option>
+                                        <option value="free_for_all" selected>online (party / free-for-all)</option>
+                                    </select>
+                                </div>
+
+                                <div class="setting-item">
+                                    <label class="setting-label" id="minstrel-multiverse-label">Minstrel Multiverse:</label>
+                                    <select class="setting-dropdown" id="minstrel-multiverse" aria-labelledby="minstrel-multiverse-label">
+                                        <option value="true" selected>yes (allow portals)</option>
+                                        <option value="false">no</option>
+                                    </select>
+                                </div>
+
+                                <div class="setting-item multiverse-dependent" id="world-entry-origins">
+                                    <label class="setting-label" id="entry-origins-label">World Entry Origins:</label>
+                                    <select class="setting-dropdown" id="entry-origins" aria-labelledby="entry-origins-label">
+                                        <option value="all">all</option>
+                                        <option value="selected" selected>selected worlds</option>
+                                        <option value="none">none</option>
+                                    </select>
+                                </div>
+
+                                <div class="setting-item multiverse-dependent" id="world-destination-worlds">
+                                    <label class="setting-label" id="destination-worlds-label">Destination Worlds:</label>
+                                    <select class="setting-dropdown" id="destination-worlds" aria-labelledby="destination-worlds-label">
+                                        <option value="all" selected>all</option>
+                                        <option value="selected">selected worlds</option>
+                                        <option value="none">none</option>
+                                    </select>
+                                </div>
+
+                                <div class="setting-item">
+                                    <label class="setting-label" id="simulation-label">Simulation:</label>
+                                    <select class="setting-dropdown" id="simulation" aria-labelledby="simulation-label">
+                                        <option value="true" selected>yes</option>
+                                        <option value="false">no</option>
+                                    </select>
+                                </div>
+
+                                <div class="setting-item">
+                                    <label class="setting-label" id="public-label">Public:</label>
+                                    <select class="setting-dropdown" id="public" aria-labelledby="public-label">
+                                        <option value="true">yes</option>
+                                        <option value="false" selected>no</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <!-- Player Settings -->
+                            <div class="settings-group">
+                                <p class="world-page-titles">User Settings (creator excluded):</p>
+                                
+                                <div class="setting-item">
+                                    <label class="setting-label" id="world-building-label">World Building:</label>
+                                    <select class="setting-dropdown" id="world-building" aria-labelledby="world-building-label">
+                                        <option value="edit" selected>edit</option>
+                                        <option value="view">view</option>
+                                        <option value="view_descriptions">view descriptions</option>
+                                        <option value="none">none</option>
+                                    </select>
+                                </div>
+
+                                <div class="setting-item">
+                                    <label class="setting-label" id="view-entries-label">Entry View Permission:</label>
+                                    <select class="setting-dropdown" id="view-entries" aria-labelledby="view-entries-label">
+                                        <option value="all" selected>all</option>
+                                        <option value="encountered">encountered</option>
+                                    </select>
+                                </div>
+
+                                <div class="setting-item">
+                                    <label class="setting-label" id="discover-locations-label">Discover New Locations:</label>
+                                    <select class="setting-dropdown" id="discover-locations" aria-labelledby="discover-locations-label">
+                                        <option value="true" selected>yes</option>
+                                        <option value="false">no</option>
+                                    </select>
+                                </div>
+
+                                <div class="setting-item">
+                                    <label class="setting-label" id="discover-characters-label">Discover New Characters:</label>
+                                    <select class="setting-dropdown" id="discover-characters" aria-labelledby="discover-characters-label">
+                                        <option value="true" selected>yes</option>
+                                        <option value="false">no</option>
+                                    </select>
+                                </div>
+
+                                <div class="setting-item multiverse-dependent" id="create-portals-setting">
+                                    <label class="setting-label" id="create-portals-label">Create Portals:</label>
+                                    <select class="setting-dropdown" id="create-portals" aria-labelledby="create-portals-label">
+                                        <option value="true" selected>yes</option>
+                                        <option value="owned_locations">at "owned" locations</option>
+                                        <option value="false">no</option>
+                                    </select>
+                                </div>
+
+                                <div class="setting-item portal-dependent" id="player-incoming-worlds">
+                                    <label class="setting-label" id="player-incoming-label">Incoming Worlds (User Portals):</label>
+                                    <select class="setting-dropdown" id="player-incoming" aria-labelledby="player-incoming-label">
+                                        <option value="all">all</option>
+                                        <option value="selected" selected>selected worlds</option>
+                                        <option value="none">none</option>
+                                    </select>
+                                </div>
+
+                                <div class="setting-item portal-dependent" id="player-destination-worlds">
+                                    <label class="setting-label" id="player-destination-label">Destination Worlds (User Portals):</label>
+                                    <select class="setting-dropdown" id="player-destination" aria-labelledby="player-destination-label">
+                                        <option value="all" selected>all</option>
+                                        <option value="selected">selected worlds</option>
+                                        <option value="none">none</option>
+                                    </select>
+                                </div>
+
+                                <div class="setting-item">
+                                    <label class="setting-label" id="copy-world-label">Copy World:</label>
+                                    <select class="setting-dropdown" id="copy-world" aria-labelledby="copy-world-label">
+                                        <option value="true" selected>yes</option>
+                                        <option value="false">no</option>
+                                    </select>
+                                </div>
+
+                                <div class="setting-item simulation-dependent" id="set-simulation-setting">
+                                    <label class="setting-label" id="set-simulation-label">Set Simulation:</label>
+                                    <select class="setting-dropdown" id="set-simulation" aria-labelledby="set-simulation-label">
+                                        <option value="all">all</option>
+                                        <option value="discovered" selected>discovered</option>
+                                        <option value="none">none</option>
+                                    </select>
+                                </div>
+
+                                <div class="setting-item">
+                                    <label class="setting-label" id="owned-locations-label">Location "ownership":</label>
+                                    <select class="setting-dropdown" id="owned-locations" aria-labelledby="owned-locations-label">
+                                        <option value="discovered" selected>discovered</option>
+                                        <option value="none">none</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+
+    </div>
+    <div class="navigation-bar">
+        <!-- Navigation links here -->
+    </div>
+    <div class="world-settings-menu" style="display: none;">
+        <ul>
+            <li>Edit World</li>
+            <li>Delete World</li>
+            <li>View Details</li>
+        </ul>
+    </div>
+</body>
+</html>

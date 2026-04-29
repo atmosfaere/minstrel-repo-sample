@@ -1,0 +1,11 @@
+# Root-level monorepo ignores
+# Each package (e.g. minstrel/) has its own .gitignore for package-specific rules
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Cursor — keep rules, ignore local config
+.cursor/*
+!.cursor/rules/
+!.cursor/rules/**

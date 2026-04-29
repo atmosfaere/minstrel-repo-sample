@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<body class="default-body">
+    <div class="page-container">
+        <div class="middle-container">
+            <div class="adventure-container">
+                <div class="adventure-portal-header">
+                    <div class="adventure-portal-header-leading" aria-hidden="true"></div>
+                    <p class="adventure-select-title">Adventure Worlds</p>
+                    <button type="button"
+                            class="world-menu-button"
+                            aria-label="World menu"
+                            aria-expanded="false"
+                            aria-haspopup="true"
+                            aria-controls="adventure-menu">
+                        <span class="adventure-menu-icon" aria-hidden="true">
+                            <span></span><span></span><span></span>
+                        </span>
+                    </button>
+                </div>
+                <div class="adventure-select-scroll">
+                    <div class="adventure-select">
+                    </div>
+                </div>
+                <div class="adventure-portal-footer">
+                    <button type="button" class="new-world-button" aria-label="Create World">
+                        <span aria-label="Create World" aria-hidden="true">+</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+
+    </div>
+    <div class="navigation-bar">
+        <!-- Navigation links here -->
+    </div>
+    <div id="adventure-menu" class="adventure-menu" role="menu" tabindex="-1">
+        <button type="button" id="world-menu-view-adventures" class="adventure-settings-menu-button" role="menuitem">View adventures</button>
+    </div>
+    <div class="adventure-settings-menu" role="menu" tabindex="-1">
+        <button id="invite-link-button" class="adventure-settings-menu-button" role="menuitem">Invite Link</button>
+        <button id="party-invite-link-button" class="adventure-settings-menu-button" role="menuitem">Party Invite Link</button>
+        <button id="delete-world-button" class="adventure-settings-menu-button" role="menuitem">Delete</button>
+        <button id="close-menu-accessibility" class="sr-only" role="menuitem">Close Settings</button>
+    </div>
+    <p id="clipStatus" aria-live="assertive" class="sr-only"></p>
+</body>
+</html>

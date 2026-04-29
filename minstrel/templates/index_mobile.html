@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Worlds</title>
+    <!-- Linking your CSS file -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles_mobile.css') }}">
+    <script src="{{ url_for('static', filename='js/socket.io.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+</head>
+<body>
+    <div class="page-container">
+        <div class="middle-container">
+            <div class="message-scroll-container">
+                <div class="chat-container"></div>
+            </div>
+        </div>
+            <div class="input-container">
+                <textarea name="userMessage" class="input-field" placeholder="Type something..."></textarea>
+                <button type="button" class="submit-button">Send</button>
+            </div>
+        </div>
+    <div class="navigation-bar">
+        <!-- Navigation links here -->
+    </div>
+
+    <script>
+        //<script src="{{ url_for('static', filename='js/socket.io.min.js') }}"
+        document.addEventListener('DOMContentLoaded', function () {
+            const textarea = document.querySelector('.input-field');
+            const contentArea = document.body; // Assuming you want to adjust the body's padding. Adjust this selector based on your content's actual container.
+            //textarea.height = 'auto';
+            const sHeight = textarea.scrollHeight;
+            //console.log(sHeight);
+
+            // Function to adjust the bottom padding of the content area
+            function adjustContentPadding() {
+                // Get the height of the textarea
+                const inputHeight = textarea.offsetHeight;
+                // Set the bottom padding of the content area to be the same as the input height
+                contentArea.style.paddingBottom = `${inputHeight}px`;
+            }
+
+            // Existing autoResize function with a call to adjustContentPadding
+            function autoResize() {
+                this.style.height = 'auto'; // Allow shrinkage
+                this.style.height = `${Math.max(this.scrollHeight, 5)}px`; // Use scrollHeight or min-height, whichever is larger
+                if (this.scrollHeight > 300) {
+                    this.style.height = '300px';
+                }
+                if (!this.dataset.initialScrollHeight) {
+                    this.dataset.initialScrollHeight = this.scrollHeight;
+                    //console.log('Initial scrollHeight stored:', this.dataset.initialScrollHeight);
+                }
+                //console.log(this.scrollHeight);
+                if (this.scrollHeight == this.dataset.initialScrollHeight) {
+                    this.style.height = '55px';
+                    this.style.height = '57px';
+                    //console.log('style.height', this.style.height)
+                }
+                //console.log(this.scrollHeight);
+                //adjustContentPadding();
+                //adjustContentPadding(); // Adjust the content area's padding based on the new input height
+                //window.scrollTo(0, document.body.scrollHeight);
+            }
+
+            textarea.addEventListener('input', autoResize, false);
+            autoResize.call(textarea); // Adjust height based on initial content
+        });
+    </script>
+</body>
+</html>

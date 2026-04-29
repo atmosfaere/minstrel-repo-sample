@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<body>
+    <div class="registration-container">
+        <h1>Minstrel</h1>
+        <h3 id="page-label">Create Account</h3>
+        <p class ="entry-label" id="entry-label">
+            Email:</p>
+            <div class="input-container">
+                <input type="text" class="registration-field" id="input" name="email" aria-label= "Email" placeholder="" spellcheck="false">
+                <button type="button" id="next-button" class="next-button">Next</button>
+            </div>
+        <p class="status-message"></p>
+        <p class="post-text">Already have an account? <a href="#signin" id="sign-in-link" onclick="navigateToSignIn()">Sign In</a></p>
+        <div class="login-divider">
+            <span class="divider-text">Or</span>
+        </div>
+        <button class="login-button google">Continue with Google</button>
+        <button class="login-button apple">Continue with Apple</button>
+        <p class="agreement">By continuing, you agree to our <a href="#agreement" onclick="navigateToAgreement()">User Agreement</a> and acknowledge that you have read the <a href="#privacy" onclick="navigateToPrivacy()">Privacy Policy</a>.</p>
+    </div>
+</body>
+</html>
