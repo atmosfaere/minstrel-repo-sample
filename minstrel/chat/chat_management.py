@@ -1,7 +1,7 @@
 import logging
 
 from fastapi import APIRouter, Depends, Request
-from data_store import chats
+from storage.data_store import chats
 
 router = APIRouter()
 logger = logging.getLogger(__name__)

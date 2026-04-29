@@ -8,9 +8,9 @@ from PIL import Image
 import io
 from datetime import datetime, timezone, timedelta
 
-from ext_auth import authenticate
-from data_store import worlds, users
-import s3_actions
+from auth.ext_auth import authenticate
+from storage.data_store import worlds, users
+from storage import s3_actions
 #don't import from world_management else it will cause circular import
 
 

@@ -3,8 +3,8 @@ import json
 import re
 import logging
 from datetime import datetime
-from http_client import http_client
-from data_store import default_key, default_url, default_model, background_key, background_model, background_url
+from networking.http_client import http_client
+from storage.data_store import default_key, default_url, default_model, background_key, background_model, background_url
 
 logger = logging.getLogger(__name__)
 

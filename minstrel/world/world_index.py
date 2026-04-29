@@ -2,11 +2,11 @@ from fastapi import APIRouter, Depends, Request, Response, Query, HTTPException
 import logging
 import asyncio
 
-from data_store import worlds
-import s3_actions
+from storage.data_store import worlds
+from storage import s3_actions
 from ids import create_location_id, create_character_id, create_object_id, get_location_tag, get_character_tag, get_document_tag, get_container_tag, get_object_tag
-from world_management import backup_location, backup_character, backup_object, add_to_discovered_characters, add_to_discovered_locations, add_to_encountered_locations, add_to_recent_locations, add_to_encountered_characters, add_to_recent_characters, add_to_recent_objects, create_character, create_location, create_object, create_document, create_container
-from ext_auth import authenticate
+from .world_management import backup_location, backup_character, backup_object, add_to_discovered_characters, add_to_discovered_locations, add_to_encountered_locations, add_to_recent_locations, add_to_encountered_characters, add_to_recent_characters, add_to_recent_objects, create_character, create_location, create_object, create_document, create_container
+from auth.ext_auth import authenticate
 from utility import extract_id_tag
 
 

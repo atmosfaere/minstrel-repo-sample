@@ -3,7 +3,7 @@ import random
 from datetime import datetime, timedelta, timezone
 from timeit import default_timer as timer
 
-from event import EventObject, EventType, schedule_event, event_queue
+from .event import EventObject, EventType, schedule_event, event_queue
 
 # Function to simulate event objects with random times
 def create_random_event():

@@ -7,10 +7,10 @@ import asyncio
 from asyncio import Lock
 import logging
 
-from world_utils import unload_world, worlds_failed_to_unload
-from data_store import worlds, users
-from event import EventObject, EventType, event_lock, event_queue
-from simulation import simulate_character
+from .world_utils import unload_world, worlds_failed_to_unload
+from storage.data_store import worlds, users
+from .event import EventObject, EventType, event_lock, event_queue
+from .simulation import simulate_character
 
 logger = logging.getLogger(__name__)
 

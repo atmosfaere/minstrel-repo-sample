@@ -1,12 +1,10 @@
 from fastapi import WebSocket, WebSocketDisconnect
 import json
-from websocket_manager import websocket_manager as wsm
-from world_management import leave_party
-import world_response
-from world_response import handle_world_response, get_world_chat
-import chat_response
-from user_management import update_user_activity
-
+from .websocket_manager import websocket_manager as wsm
+from world.world_management import leave_party
+from world import world_response
+from world.world_response import handle_world_response, get_world_chat
+from chat import chat_response
 
 async def route_message(websocket: WebSocket, data):
     #data = json.loads(data)
@@ -14,8 +12,6 @@ async def route_message(websocket: WebSocket, data):
     content = data["content"]
     user_id = wsm.get_user_id(websocket)
     room_id = wsm.get_room_id(websocket)
-
-    update_user_activity(user_id)
 
     if data['route'] == 'heartbeat':
         if mode == "world":

@@ -1,9 +1,9 @@
-from http_client import http_client
+from networking.http_client import http_client
 from fastapi import Request, Response, HTTPException
 from fastapi.responses import RedirectResponse
 from aiohttp import ClientResponseError
-import s3_actions
-from data_store import users
+from storage import s3_actions
+from storage.data_store import users
 import os
 
 

@@ -8,7 +8,7 @@ import os
 import shutil
 import stat
 
-from data_store import backup_queue
+from .data_store import backup_queue
 
 
 #testing store nested dict
@@ -33,7 +33,7 @@ _replace_locks = defaultdict(asyncio.Lock)
 
 #BASE_DIR = r'C:\Users\jakvo\OneDrive\Documents\Minstrel Dev'
 # Set BASE_DIR to be at the same level as the project folder
-BASE_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'minstrel_data')
+BASE_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__)))), 'minstrel_data')
 
 logger = logging.getLogger(__name__)
 

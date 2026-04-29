@@ -2,7 +2,7 @@ from fastapi import WebSocket
 from typing import Dict, List
 import os
 
-from world_models import WorldsDict
+from world.world_models import WorldsDict
 
 '''For working data stored in ram, backed up to s3 on the fly, large worlds may be moved to disk with caching of most recent and most active items'''
 

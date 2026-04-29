@@ -6,16 +6,16 @@ import asyncio
 import copy
 #from rapidfuzz import process
 
-from data_store import worlds
-import s3_actions
+from storage.data_store import worlds
+from storage import s3_actions
 from ids import create_user_id, create_world_id, create_character_id, create_location_id, create_object_id, create_portal_id, get_player_character_tag, get_character_tag, get_location_tag, get_object_tag, get_document_tag, get_container_tag, get_party_tag
-from ext_auth import authenticate
-from event import schedule_event, EventObject, EventType
-from world_utils import backup_world_s3, unload_world, update_world_last_activity, backup_adventure_info, update_user_character_last_activity
-from simulation import schedule_simulation
+from auth.ext_auth import authenticate
+from .event import schedule_event, EventObject, EventType
+from .world_utils import backup_world_s3, unload_world, update_world_last_activity, backup_adventure_info, update_user_character_last_activity
+from .simulation import schedule_simulation
 from utility import extract_id_tag
-from world_search_elasticsearch import world_search
-from http_client import http_client
+from search.world_search_elasticsearch import world_search
+from networking.http_client import http_client
 
 #process.extract(query, choices, limit=10)
 

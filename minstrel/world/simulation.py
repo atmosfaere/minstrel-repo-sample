@@ -5,10 +5,10 @@ import logging
 import asyncio
 import os
 
-from data_store import worlds, users
+from storage.data_store import worlds, users
 from utility import get_response_value
-from event import schedule_event, EventObject, EventType
-import s3_actions
+from .event import schedule_event, EventObject, EventType
+from storage import s3_actions
 
 logger = logging.getLogger(__name__)
 
@@ -25,8 +25,8 @@ async def get_character_simulation_action(text):
 
 #called both when character set to simulate and when scheduled object is run
 async def simulate_character(world, character_id):
-    from world_response import process_adventure
-    from websocket_manager import websocket_manager as wsm
+    from .world_response import process_adventure
+    from networking.websocket_manager import websocket_manager as wsm
     #check if character is still set as simulate
     if character_id not in worlds[world]['simulated_characters']:
         logger.error(f"Character {character_id} not found in simulated_characters for world: {world}")

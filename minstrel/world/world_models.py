@@ -1,5 +1,5 @@
 from dict_wrapper import DictWrapper
-from world_settings import SettingsDict
+from .world_settings import SettingsDict
 from enum import Enum
 
 

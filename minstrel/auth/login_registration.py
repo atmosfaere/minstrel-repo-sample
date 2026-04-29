@@ -18,9 +18,9 @@ from argon2.exceptions import VerifyMismatchError
 
 from starlette.status import HTTP_403_FORBIDDEN
 
-import authentication
-import s3_actions
-from data_store import users
+from . import authentication
+from storage import s3_actions
+from storage.data_store import users
 #from fastapi_server import templates
 
 #just for testing all on one server

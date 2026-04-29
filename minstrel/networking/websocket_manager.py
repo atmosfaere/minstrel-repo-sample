@@ -3,9 +3,9 @@ import asyncio
 import json
 from starlette.websockets import WebSocketState
 
-from data_store import worlds, chats
-import world_utils
-import chat_management
+from storage.data_store import worlds, chats
+from world import world_utils
+from chat import chat_management
 
 logger = logging.getLogger(__name__)
 class WebSocketManager:
@@ -52,7 +52,7 @@ class WebSocketManager:
             # Don't call disconnect recursively, just clean up
             if websocket in self.active_connections:
                 if self.get_mode(websocket) == "world":
-                    world_utils.handle_websocket_disconnect(websocket, self.get_room_id(websocket))
+                    world_utils.handle_websocket_disconnect(websocket, self.get_world(websocket), self.get_room_id(websocket), self.get_user_id(websocket))
                 elif self.get_mode(websocket) == "chat":
                     chat_management.remove_connection(websocket, self.get_world(websocket), self.get_room_id(websocket), self.get_user_id(websocket))
                 del self.active_connections[websocket]

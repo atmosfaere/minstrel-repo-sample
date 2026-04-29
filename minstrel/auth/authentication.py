@@ -9,7 +9,7 @@ from datetime import datetime, timedelta, timezone
 import secrets
 import json
 import logging
-import s3_actions
+from storage import s3_actions
 
 logger = logging.getLogger(__name__)
 

@@ -23,28 +23,28 @@ from slowapi.errors import RateLimitExceeded
 from datetime import datetime, timedelta, timezone
 #from web_searcher import websearch, fetch_pages
 #from json_extractor import extract_broken_json
-import world_response
-import world_management
-from world_management import get_world, router as world_management_router
-from portal_management import router as portal_management_router
-from world_index import router as world_index_router
-from world_utils import router as world_utils_router
-import chat_management
-import chat_response
-import event_processing
-from data_store import users, worlds, chats
-import s3_actions
-from websocket_routes import route_message
-from websocket_manager import websocket_manager
+from world import world_response
+from world import world_management
+from world.world_management import get_world, router as world_management_router
+from portal.portal_management import router as portal_management_router
+from world.world_index import router as world_index_router
+from world.world_utils import router as world_utils_router
+from chat import chat_management
+from chat import chat_response
+from world import event_processing
+from storage.data_store import users, worlds, chats
+from storage import s3_actions
+from networking.websocket_routes import route_message
+from networking.websocket_manager import websocket_manager
 #from adventure_endpoints import adventure_router
 from aiohttp import ClientResponseError
 import traceback
 
-from http_client import http_client
-from ext_auth import authenticate
-from login_registration import router as sign_in_router
-from world_search_elasticsearch import world_search
-from portal_search_elasticsearch import portal_search
+from networking.http_client import http_client
+from auth.ext_auth import authenticate
+from auth.login_registration import router as sign_in_router
+from search.world_search_elasticsearch import world_search
+from search.portal_search_elasticsearch import portal_search
 
 # Configure logging only if not already configured by uvicorn
 # This prevents conflicts during hot reloads
