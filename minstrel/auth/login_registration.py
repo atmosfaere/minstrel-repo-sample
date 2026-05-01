@@ -20,6 +20,7 @@ from argon2.exceptions import VerifyMismatchError
 from starlette.status import HTTP_403_FORBIDDEN
 
 from . import authentication
+from . import third_party
 from storage import s3_actions
 from storage.data_store import users
 #from fastapi_server import templates
@@ -383,28 +384,174 @@ async def register(request: Request, _: bool = Depends(verify_invite_cookie)):
     #return templates.TemplateResponse("register.html", {"request": request})
 
 
-#@app.post("/third-party-sign-in/")
-@router.post("/third_party-sign-in/")
-async def third_party_sign_in(request: Request, response: Response):
-    # verify token
-    #create account if it doesn't exist, else give minstrel jwt token using user_id
-    sub = "sub"
-    user_id = await s3_actions.retrieve(BUCKET, "identifier/", sub)
-    jti = await authentication.get_auth_tokens(request, response, user_id)
-    #await s3_actions.store(BUCKET, "accounts/", f"{user_id}/tokens", jti)
+def _set_pending_cookie(response: Response, request: Request, name: str, value: str, max_age: int):
+    response.set_cookie(
+        key=name, value=value, httponly=True,
+        secure=authentication.get_cookie_secure(request),
+        samesite="strict", max_age=max_age,
+        domain=authentication.get_cookie_domain(request),
+    )
 
-    # if third_party device is stolen, user must deactivate account with third_party for that device in order to secure account
-    # if their third_party account is stolen/compromised/locked,
-    # transfer account to regular or a new third party account, beware social engineering, may not be able to implement, require documents and video call?
-    # if remember me is selected add remember me
-    authentication.create_remember_me_jwt(user_id, request, response)
-    # redirect to
+def _delete_pending_cookie(response: Response, request: Request, name: str):
+    """Delete a pending-state cookie using the same attributes it was set with.
+    Browsers match cookies for deletion by name+domain+path+samesite."""
+    response.delete_cookie(
+        key=name,
+        httponly=True,
+        secure=authentication.get_cookie_secure(request),
+        samesite="strict",
+        domain=authentication.get_cookie_domain(request),
+    )
 
-'''
-@app.post("/third-party-login-apple")
-async def handle_apple_login(request: Request):
-    third_party_auth.apple_login(request)
-'''
+
+@router.post("/auth/google/token")
+async def google_token(request: Request, response: Response, _: bool = Depends(verify_invite_cookie)):
+    """Verify a Google ID token from the Google Identity Services JS SDK."""
+    data = await request.json()
+    id_token = data.get("id_token")
+    if not id_token:
+        raise HTTPException(status_code=400, detail="id_token required")
+    try:
+        user_info = await third_party.get_google_user_info(id_token)
+    except HTTPException:
+        raise
+    except Exception as e:
+        logging.error(f"Google token verification error: {e}", exc_info=True)
+        raise HTTPException(status_code=502, detail="Google authentication failed")
+
+    result, payload = await third_party.handle_oauth_token(
+        "google", user_info["sub"], user_info["email"], user_info["name"], request, response
+    )
+    if result == "ok":
+        return {"status": "ok"}
+    if result == "new_user":
+        _set_pending_cookie(response, request, "oauth_new_user", payload, 1800)
+    else:
+        _set_pending_cookie(response, request, "oauth_merge_pending", payload, 900)
+    return {"status": result}
+
+
+@router.post("/auth/apple/token")
+async def apple_token(request: Request, response: Response, _: bool = Depends(verify_invite_cookie)):
+    """Verify an Apple ID token from the Apple JS SDK.
+    Pass user_json (JSON string) only on first authorisation — Apple sends it once."""
+    data = await request.json()
+    id_token = data.get("id_token")
+    if not id_token:
+        raise HTTPException(status_code=400, detail="id_token required")
+    try:
+        user_info = await third_party.get_apple_user_info(id_token, data.get("user"))
+    except HTTPException:
+        raise
+    except Exception as e:
+        logging.error(f"Apple token verification error: {e}", exc_info=True)
+        raise HTTPException(status_code=502, detail="Apple authentication failed")
+
+    result, payload = await third_party.handle_oauth_token(
+        "apple", user_info["sub"], user_info["email"], user_info["name"], request, response
+    )
+    if result == "ok":
+        return {"status": "ok"}
+    if result == "new_user":
+        _set_pending_cookie(response, request, "oauth_new_user", payload, 1800)
+    else:
+        _set_pending_cookie(response, request, "oauth_merge_pending", payload, 900)
+    return {"status": result}
+
+
+@router.post("/auth/complete-oauth-registration")
+async def complete_oauth_registration(request: Request, response: Response, _: bool = Depends(verify_invite_cookie)):
+    """Second step for new OAuth users: submit chosen username and create account."""
+    new_user_token = request.cookies.get("oauth_new_user")
+    if not new_user_token:
+        raise HTTPException(status_code=400, detail="No pending OAuth registration")
+
+    token_data = third_party.decode_new_user_token(new_user_token)
+    if not token_data:
+        raise HTTPException(status_code=400, detail="Invalid or expired registration token")
+
+    data = await request.json()
+    username = data.get("username", "")
+
+    if len(username) < 3 or len(username) > 25:
+        raise HTTPException(status_code=400, detail="Username must be between 3 and 25 characters")
+    if not re.match(r'^[a-zA-Z0-9_]+$', username):
+        raise HTTPException(status_code=400, detail="Username may only contain letters, numbers, and underscores")
+    if await s3_actions.check_key(BUCKET, "usernames/", username):
+        raise HTTPException(status_code=400, detail="Username is already taken")
+
+    try:
+        user_id = await third_party._create_oauth_account(
+            token_data["provider"],
+            token_data["scoped_sub"],
+            token_data["email"],
+            username,
+        )
+        await third_party._finish_oauth_login(user_id, request, response)
+        _delete_pending_cookie(response, request, "oauth_new_user")
+        return {"status": "ok"}
+    except Exception as e:
+        logging.error(f"Error completing OAuth registration: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Account creation failed")
+
+
+@router.post("/auth/link-provider")
+async def link_provider(request: Request, response: Response):
+    """Link a pending OAuth provider to an existing password account.
+    If the existing account has no password (OAuth-only), the link is automatic
+    since both providers verified the same email."""
+    merge_token = request.cookies.get("oauth_merge_pending")
+    if not merge_token:
+        raise HTTPException(status_code=400, detail="No pending provider link")
+
+    merge_data = third_party.decode_merge_token(merge_token)
+    if not merge_data:
+        raise HTTPException(status_code=400, detail="Invalid or expired link token")
+
+    data = await request.json()
+    email = data.get("email")
+    username = data.get("username")
+    password = data.get("password")
+
+    if not email and not username:
+        raise HTTPException(status_code=400, detail="Email or username required")
+
+    try:
+        if email:
+            user_id = await s3_actions.retrieve(BUCKET, "email/", email)
+        else:
+            user_id = await s3_actions.retrieve(BUCKET, "usernames/", username)
+    except HTTPException:
+        raise HTTPException(status_code=401, detail="Invalid credentials")
+
+    account_details = await s3_actions.retrieve(BUCKET, f"accounts/{user_id}/", "account_details")
+
+    # Ensure the account the user is trying to link to actually owns the conflicting email.
+    # This prevents a user from redirecting an OAuth link to an unrelated account.
+    if account_details.get("email") != merge_data.get("email"):
+        raise HTTPException(status_code=401, detail="Invalid credentials")
+
+    hashed_password = account_details.get("hashed_password")
+
+    if hashed_password:
+        if not password:
+            raise HTTPException(status_code=400, detail="Password required to link this account")
+        try:
+            ph.verify(hashed_password, password)
+        except VerifyMismatchError:
+            raise HTTPException(status_code=401, detail="Invalid credentials")
+    # No password → OAuth-only account: both providers verified the same email → auto-link
+
+    try:
+        await third_party.link_provider_to_account(
+            user_id, merge_data["provider"], merge_data["scoped_sub"]
+        )
+        await third_party._finish_oauth_login(user_id, request, response)
+        _delete_pending_cookie(response, request, "oauth_merge_pending")
+        return {"status": "ok"}
+    except Exception as e:
+        logging.error(f"Error linking provider: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Account linking failed")
 
 # ensure that sender is Minstrel or the user with user_id, else attacker can sign anyone out
 #@router.post("/lost-device/")

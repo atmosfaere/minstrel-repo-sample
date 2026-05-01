@@ -386,16 +386,16 @@ function loadModule(page) {
                         }
                         document.body.className = 'sign-in-body';
                         signIn.load();
-                        loadScript("https://appleid.cdn-apple.com/appleauth/static/jsapi/appleid/1/en_US/appleid.auth.js", function () {
-                            // Initialize the Apple sign-in here
-                            initializeAppleSignIn();
-                        });
+                        loadScriptOnce('https://accounts.google.com/gsi/client', () => signIn.initGoogleAuth());
+                        loadScriptOnce('https://appleid.cdn-apple.com/appleauth/static/jsapi/appleid/1/en_US/appleid.auth.js', () => signIn.initAppleAuth());
                     });
                     break;
                 case 'register':
                     document.body.className = 'auth-body';
                     document.body.innerHTML = html;
                     register.load();
+                    loadScriptOnce('https://accounts.google.com/gsi/client', () => register.initGoogleButton());
+                    loadScriptOnce('https://appleid.cdn-apple.com/appleauth/static/jsapi/appleid/1/en_US/appleid.auth.js', () => register.initAppleButton());
                     break;
                 case 'invite':
                     console.log('loading invite in router');
@@ -521,27 +521,13 @@ function loadScript(url, callback) {
     document.head.appendChild(script);
 }
 
-function initializeAppleSignIn() {
-    // Configuration object as per Apple's requirements
-    //console.log("nonce ", nonce);
-    /* disabled until apple auth is setup
-    document.getElementById('apple-signin-button').addEventListener('click', function (event) {
-        event.preventDefault();
-        AppleID.auth.signIn();
-    });*/
-
-    const config = {
-        clientId: '[CLIENT_ID]', // Your Apple client ID
-        scope: '[SCOPES]',       // Scopes for which you're requesting access
-        redirectURI: '[REDIRECT_URI]', // URI to which users will be redirected after authentication
-        state: '[STATE]',        // Optional state used to maintain state between the request and callback
-        nonce: nonce
-    };
-
-    // Initialize the Apple sign-in
-    AppleID.auth.init(config);
-
-    // Optionally, you can set up event listeners or callbacks here
+/** Load a script only once; no-op if the tag already exists in <head>. */
+function loadScriptOnce(url, callback) {
+    if (document.querySelector(`script[src="${url}"]`)) {
+        if (callback) callback();
+        return;
+    }
+    loadScript(url, callback);
 }
 
 

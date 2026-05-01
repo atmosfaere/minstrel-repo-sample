@@ -1,5 +1,9 @@
 import { checkAuthentication, checkInvite, navigatePage, baseUrl } from './app.js';
 
+// Fill in matching values from auth/third_party.py before going to production
+const GOOGLE_CLIENT_ID = 'your-google-client-id.apps.googleusercontent.com';
+const APPLE_CLIENT_ID  = 'com.your.app';
+
 let state = "email";
 let email = null;
 let username = null;
@@ -8,16 +12,8 @@ let input = null;
 let statusMessage = null;
 let postText = null;
 let thirdParty = false;
+let oauthProvider = null;   // "google" | "apple" — set when OAuth flow is active
 let identifier = null;
-let urlParams = null;
-let thirdPartyRedirect = null;
-
-//use secure cookie for thirdpartyjwt
-if (thirdPartyRedirect) {
-    thirdParty = true;
-    state = "username";
-    showUsernameInput();
-}
 
 export async function load() {
     try {
@@ -39,8 +35,6 @@ export async function load() {
     input = document.getElementById('input');
     statusMessage = document.querySelector('.status-message');
     postText = document.querySelector('.post-text');
-    urlParams = new URLSearchParams(window.location.search);
-    thirdPartyRedirect = urlParams.get('thirdPartyRedirect');
     bindEvents();
 }
 
@@ -52,60 +46,64 @@ function bindEvents() {
                 checkEmail(input.value).then(isValid => {
                     if (isValid) {
                         email = input.value;
-                        console.log("Email valid and available");
                         showUsernameInput();
-                    } else {
-                        console.log("Email validation failed");
-                        //showEmailInput();
                     }
                 });
                 break;
 
             case "username":
-                //continue with registration if no issues with username
-                checkUsername(input.value).then(isValid => {
+                checkUsername(input.value).then(async isValid => {
                     if (isValid) {
                         username = input.value;
-                        console.log("Username valid and available");
                         if (thirdParty === false) {
                             showPasswordInput();
                         } else {
-                            createAccount(null);
+                            await completeOAuthRegistration(username);
                         }
-                    }
-                    else {
-                        //showUsernameInput();
                     }
                 });
                 break;
+
             case "password":
                 if (checkPassword(input.value)) {
-                    //make sure characters are unicode/utf-8
                     password = input.value;
-                    //console.log('Username:', username, 'Password:', password);
-                    //showValidationInput();
                     if (await createAccount()) {
-                        console.log('account created');
                         navigatePage('home');
                     }
-
-                } else {
-                    //show verification;
                 }
-
                 break;
+
             case "validate":
                 createAccount(input.value);
                 break;
+
+            case "link_provider": {
+                const emailOrUsername = input.value.trim();
+                const linkPassword = document.getElementById('verify-password')?.value ?? '';
+                if (!emailOrUsername || !linkPassword) {
+                    statusMessage.textContent = 'Please fill in all fields';
+                    statusMessage.style.visibility = 'visible';
+                    break;
+                }
+                await submitLinkProvider(emailOrUsername, linkPassword);
+                break;
+            }
         }
     });
 
     const signInLink = document.getElementById('sign-in-link');
     if (signInLink) {
-        signInLink.addEventListener('click', function (event) {
-            event.preventDefault(); // Prevent the default anchor behavior
-            navigatePage('sign-in');
-        });
+        signInLink.addEventListener('click', (e) => { e.preventDefault(); navigatePage('sign-in'); });
+    }
+
+    const agreementLink = document.getElementById('agreement-link');
+    if (agreementLink) {
+        agreementLink.addEventListener('click', (e) => { e.preventDefault(); navigatePage('agreement'); });
+    }
+
+    const privacyLink = document.getElementById('privacy-link');
+    if (privacyLink) {
+        privacyLink.addEventListener('click', (e) => { e.preventDefault(); navigatePage('privacy'); });
     }
 }
 
@@ -447,32 +445,189 @@ function navigateToSignIn() {
 }
 
 function hideAltLogin() {
-    // Select and hide the login divider
-    const loginDivider = document.querySelector('.login-divider');
-    if (loginDivider) {
-        loginDivider.style.display = 'none';
-    }
+    document.querySelector('.login-divider')?.style.setProperty('display', 'none');
+    document.getElementById('google-signin-btn')?.style.setProperty('display', 'none');
+    document.getElementById('apple-signin-btn')?.style.setProperty('display', 'none');
+    document.querySelector('.agreement')?.style.setProperty('display', 'none');
+}
 
-    // Select and hide all login buttons
-    const loginButtons = document.querySelectorAll('.login-button');
-    loginButtons.forEach(button => {
-        button.style.display = 'none';
+// ── OAuth provider initialisation ─────────────────────────────────────────────
+
+// ── OAuth button initialisers (called from app.js after each SDK script loads) ──
+
+export function initGoogleButton() {
+    const btn = document.getElementById('google-signin-btn');
+    if (!btn) return;
+    google.accounts.id.initialize({
+        client_id: GOOGLE_CLIENT_ID,
+        callback: async (googleResponse) => {
+            await handleOAuthToken('google', { id_token: googleResponse.credential });
+        },
+        ux_mode: 'popup',
+        auto_select: false,
+        context: 'signup',
+        use_fedcm_for_prompt: true,
     });
+    btn.addEventListener('click', () => google.accounts.id.prompt());
+}
 
-    // Select and hide the agreement paragraph
-    const agreement = document.querySelector('.agreement');
-    if (agreement) {
-        agreement.style.display = 'none';
+export function initAppleButton() {
+    const btn = document.getElementById('apple-signin-btn');
+    if (!btn) return;
+    AppleID.auth.init({
+        clientId: APPLE_CLIENT_ID,
+        scope: 'name email',
+        redirectURI: `${window.location.origin}/auth/apple/callback`,
+        usePopup: true,
+    });
+    btn.addEventListener('click', async () => {
+        try {
+            const appleResponse = await AppleID.auth.signIn();
+            const payload = { id_token: appleResponse.authorization.id_token };
+            if (appleResponse.user) payload.user = JSON.stringify(appleResponse.user);
+            await handleOAuthToken('apple', payload);
+        } catch (err) {
+            if (err?.error !== 'popup_closed_by_user') {
+                console.error('Apple Sign-In error:', err);
+                statusMessage.textContent = 'Apple Sign-In failed. Please try again.';
+                statusMessage.style.visibility = 'visible';
+            }
+        }
+    });
+}
+
+// ── Shared OAuth response handler ─────────────────────────────────────────────
+
+async function handleOAuthToken(provider, payload) {
+    statusMessage.textContent = 'Signing in…';
+    statusMessage.style.visibility = 'visible';
+
+    try {
+        const response = await fetch(`${baseUrl}/auth/${provider}/token`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'same-origin',
+            body: JSON.stringify(payload),
+        });
+        const data = await response.json();
+
+        if (!response.ok) {
+            statusMessage.textContent = data.detail || 'Sign-in failed. Please try again.';
+            statusMessage.style.visibility = 'visible';
+            return;
+        }
+
+        statusMessage.style.visibility = 'hidden';
+
+        if (data.status === 'ok') {
+            navigatePage('home');
+        } else if (data.status === 'new_user') {
+            oauthProvider = provider;
+            thirdParty = true;
+            showUsernameInput();
+        } else if (data.status === 'conflict') {
+            oauthProvider = provider;
+            showLinkProviderUI(provider);
+        }
+    } catch (err) {
+        console.error('OAuth token error:', err);
+        statusMessage.textContent = 'Connection error. Please try again.';
+        statusMessage.style.visibility = 'visible';
     }
 }
 
-document.addEventListener('AppleIDSignInOnSuccess', (event) => {
-    // Handle successful response.
-    console.log(event.detail.data);
-});
+// ── OAuth account completion (username picker) ────────────────────────────────
 
+async function completeOAuthRegistration(chosenUsername) {
+    statusMessage.textContent = 'Creating account…';
+    statusMessage.style.visibility = 'visible';
+    try {
+        const response = await fetch(`${baseUrl}/auth/complete-oauth-registration`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'same-origin',
+            body: JSON.stringify({ username: chosenUsername }),
+        });
+        const data = await response.json();
+        if (response.ok && data.status === 'ok') {
+            navigatePage('home');
+        } else {
+            statusMessage.textContent = data.detail || 'Account creation failed. Please try again.';
+            statusMessage.style.visibility = 'visible';
+        }
+    } catch (err) {
+        console.error('Complete OAuth registration error:', err);
+        statusMessage.textContent = 'Connection error. Please try again.';
+        statusMessage.style.visibility = 'visible';
+    }
+}
 
-document.addEventListener('AppleIDSignInOnFailure', (event) => {
-    // Handle error.
-    console.log(event.detail.error);
-});
+// ── Account linking UI (conflict path) ───────────────────────────────────────
+
+function showLinkProviderUI(provider) {
+    hideAltLogin();
+    removePasswordVerify();
+
+    const providerName = provider === 'google' ? 'Google' : 'Apple';
+    document.getElementById('page-label').textContent = 'Link Your Account';
+    document.getElementById('entry-label').textContent = 'Email or Username:';
+    postText.innerHTML = `An account with this email already exists. Enter your password to link your ${providerName} account.`;
+    input.value = '';
+    input.type = 'text';
+    input.setAttribute('aria-label', 'Email or Username');
+
+    const nextButton = document.getElementById('next-button');
+    nextButton.textContent = 'Link Account';
+
+    // Add password field below the existing input
+    const inputContainer = document.querySelector('.input-container');
+    const passwordLabel = document.createElement('p');
+    passwordLabel.className = 'entry-label';
+    passwordLabel.id = 'verify-label';
+    passwordLabel.textContent = 'Password:';
+
+    const passwordContainer = inputContainer.cloneNode(true);
+    passwordContainer.id = 'verify-container';
+    const passwordInput = passwordContainer.querySelector('.registration-field');
+    passwordInput.id = 'verify-password';
+    passwordInput.type = 'password';
+    passwordInput.value = '';
+    passwordInput.setAttribute('aria-label', 'Password');
+    passwordContainer.querySelector('.next-button').style.visibility = 'hidden';
+
+    inputContainer.insertAdjacentElement('afterend', passwordLabel);
+    passwordLabel.insertAdjacentElement('afterend', passwordContainer);
+
+    statusMessage.style.visibility = 'hidden';
+    state = 'link_provider';
+}
+
+async function submitLinkProvider(emailOrUsername, linkPassword) {
+    statusMessage.textContent = 'Linking account…';
+    statusMessage.style.visibility = 'visible';
+
+    const isEmail = validateEmailFormat(emailOrUsername);
+    try {
+        const response = await fetch(`${baseUrl}/auth/link-provider`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'same-origin',
+            body: JSON.stringify({
+                email: isEmail ? emailOrUsername : null,
+                username: isEmail ? null : emailOrUsername,
+                password: linkPassword,
+            }),
+        });
+        const data = await response.json();
+        if (response.ok && data.status === 'ok') {
+            navigatePage('home');
+        } else {
+            statusMessage.textContent = data.detail || 'Linking failed. Check your credentials and try again.';
+            statusMessage.style.visibility = 'visible';
+        }
+    } catch (err) {
+        console.error('Link provider error:', err);
+        statusMessage.textContent = 'Connection error. Please try again.';
+        statusMessage.style.visibility = 'visible';
+    }
+}

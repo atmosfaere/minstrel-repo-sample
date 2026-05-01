@@ -167,6 +167,14 @@ body.sign-in-body .bottom-image {
         border: 1.3px solid black;
         -webkit-border-radius: 20px;
         border-radius: 38px;
+        cursor: pointer;
+        -webkit-transition: box-shadow .218s;
+        transition: box-shadow .218s;
+    }
+
+    body.sign-in-body .apple-signin-button:hover {
+        -webkit-box-shadow: 0 1px 2px 0 rgba(60, 64, 67, .30), 0 1px 3px 1px rgba(60, 64, 67, .15);
+        box-shadow: 0 1px 2px 0 rgba(60, 64, 67, .30), 0 1px 3px 1px rgba(60, 64, 67, .15);
     }
 
     body.sign-in-body .apple-signin-img {
@@ -195,6 +203,7 @@ body.sign-in-body .bottom-image {
         outline: none;
         overflow: hidden;
         padding: 0;
+        position: relative;
         text-align: center;
         -webkit-transition: background-color .218s, border-color .218s, box-shadow .218s;
         transition: background-color .218s, border-color .218s, box-shadow .218s;
@@ -297,9 +306,7 @@ body.sign-in-body .bottom-image {
         }
 
             body.sign-in-body .gsi-material-button:not(:disabled):hover .gsi-material-button-state {
-                background-color: #303030;
-                opacity: 8%;
-                z-index: 100;
+                opacity: 0;
             }
 
 body.sign-in-body p a {

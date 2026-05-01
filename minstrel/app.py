@@ -106,8 +106,8 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
         response.headers['Content-Security-Policy'] = (
             "default-src 'self'; "
             "script-src 'self' https://accounts.google.com https://appleid.cdn-apple.com; "
-            f"style-src 'self' 'nonce-{nonce}'; "
-            "frame-src 'self' https://accounts.google.com; "  # Allow iframes from Google
+            f"style-src 'self' 'nonce-{nonce}' https://accounts.google.com 'sha256-f4HQaD+NpkjxARuDdQGRxOo2ppAliUcSVMnYbNcYEJ0='; "
+            "frame-src 'self' https://accounts.google.com https://appleid.apple.com; "
             "connect-src 'self' https://accounts.google.com https://appleid.cdn-apple.com; "
             "img-src 'self' https://appleid.cdn-apple.com https://minstrel-images.s3.us-west-1.amazonaws.com/icons;")
         response.headers['Referrer-Policy'] = 'strict-origin-when-cross-origin'
