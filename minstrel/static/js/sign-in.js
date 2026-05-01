@@ -34,7 +34,16 @@ export async function load() {
     postText = document.querySelector('.post-text');
     remember_me_checkbox = document.getElementById('remember-me');
 
+    updateEntryContainerLayout();
+    window.addEventListener('resize', updateEntryContainerLayout);
+
     await bindEvents();
+}
+
+function updateEntryContainerLayout() {
+    const registrationContainer = document.querySelector('.registration-container');
+    if (!registrationContainer) return;
+    registrationContainer.classList.toggle('desktop', window.innerWidth > window.innerHeight);
 }
 
 async function bindEvents() {

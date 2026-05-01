@@ -55,9 +55,16 @@ body.sign-in-body .entry-container {
     display: flex;
     flex-direction: column;
     align-items: flex-start;
-    margin-right: 42px;
     margin-right: 75px;
     margin-bottom: 4px;
+}
+
+body.sign-in-body .registration-container.desktop .entry-container {
+    margin-right: 0;
+}
+
+body.sign-in-body .registration-container.desktop h1 {
+    margin-right: 0;
 }
 
 body.sign-in-body .registration-field {
@@ -135,7 +142,6 @@ body.sign-in-body h1 {
 
     body.sign-in-body .top-image {
         position: fixed;
-        bottom: 100;
         width: 100%;
         height: auto;
         z-index: -1;
