@@ -9,7 +9,7 @@ import copy
 from storage.data_store import worlds
 from storage import s3_actions
 from ids import create_user_id, create_world_id, create_character_id, create_location_id, create_object_id, create_portal_id, get_player_character_tag, get_character_tag, get_location_tag, get_object_tag, get_document_tag, get_container_tag, get_party_tag
-from auth.ext_auth import authenticate
+from auth.auth_client import authenticate
 from .event import schedule_event, EventObject, EventType
 from .world_utils import backup_world_s3, unload_world, update_world_last_activity, backup_adventure_info, update_user_character_last_activity
 from .simulation import schedule_simulation

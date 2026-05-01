@@ -41,10 +41,28 @@ from aiohttp import ClientResponseError
 import traceback
 
 from networking.http_client import http_client
-from auth.ext_auth import authenticate
+from auth.auth_client import authenticate
 from auth.login_registration import router as sign_in_router
 from search.world_search_elasticsearch import world_search
 from search.portal_search_elasticsearch import portal_search
+
+import importlib.util, sys, os
+
+def _register_sibling_package(name):
+    """Import a sibling repo package by path without adding repo root to sys.path."""
+    pkg_dir = os.path.normpath(os.path.join(os.path.dirname(__file__), '..', name))
+    spec = importlib.util.spec_from_file_location(
+        name,
+        os.path.join(pkg_dir, '__init__.py'),
+        submodule_search_locations=[pkg_dir]  # enables submodule imports (notes.router etc.)
+    )
+    mod = importlib.util.module_from_spec(spec)
+    sys.modules[name] = mod
+    spec.loader.exec_module(mod)
+
+_register_sibling_package('notes')
+from notes.router import router as notes_router
+
 
 # Configure logging only if not already configured by uvicorn
 # This prevents conflicts during hot reloads
@@ -142,12 +160,13 @@ app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 
+_NOTES_STATIC = os.path.normpath(os.path.join(os.path.dirname(__file__), '..', 'notes', 'static'))
+app.mount("/static/notes", StaticFiles(directory=_NOTES_STATIC), name="notes-static")
+
 @app.get("/static/{file_path:path}")
 @limiter.limit("60/minute")
 async def serve_static_files(request: Request, file_path: str):
     """Rate-limited static file serving"""
-    import os
-    
     static_path = os.path.join("static", file_path)
     if os.path.exists(static_path) and os.path.isfile(static_path):
         response = FileResponse(static_path)
@@ -175,6 +194,7 @@ app.include_router(world_management_router)
 app.include_router(portal_management_router)
 app.include_router(world_index_router)
 app.include_router(world_utils_router)
+app.include_router(notes_router)
 """
 app.include_router(adventure_router)
 app.include_router(chat_router)

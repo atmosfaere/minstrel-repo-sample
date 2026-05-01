@@ -13,6 +13,7 @@ from storage import s3_actions
 
 logger = logging.getLogger(__name__)
 
+BUCKET = "minstrel-accounts"
 
 #using separate keys prevents an attacker or negligent developer from sending one type of token in place of another type of token, token won't be validated
 #probably need to implement ability to rotate keys check past keys as well as present
@@ -20,11 +21,27 @@ secret_key = "c5b6005d228181f03bd587adb70f0cd31a39497163afe0f0a877966f467f73cd"
 refresh_secret_key = "0392af64ea1e446f67a321f407f9746e098aad530a81b0bfde7df381f7ed52c5"
 remember_me_key = "c02621eb2cd9ca6063baa0a59e3dbf7e5a551710119489a80ee06257990fc013"
 forgot_password_key = "7610f7ac22ac43a5ed698a60c4303db48566e9ae0a40f34793073c3c18332f84"
+invite_key = "a3f1d2e4b5c6789012345678901234567890abcdef1234567890abcdef123456"
 #secret_key = os.getenv("SECRET_KEY")
 #refresh_secret_key  = os.getenv("REFRESH_SECRET_KEY")
 #remember_me_key = os.getenv("REMEMBER_ME_KEY")
 #forgot_password_key = os.getenv("FORGOT_PASSWORD_KEY")
+#invite_key = os.getenv("INVITE_KEY")
 ALGORITHM = "HS256"
+
+def get_cookie_domain(request) -> str | None:
+    """Derive the cookie domain from the request host.
+    """
+    host = (
+        request.headers.get("x-forwarded-host")
+        or request.headers.get("host", "")
+    ).split(":")[0]
+    if host in ("127.0.0.1", "localhost", ""):
+        return None
+    return host
+
+def get_cookie_secure(request) -> bool:
+    return request.url.scheme == "https"
 
 #token expiration periods
 access_exp_length = 15 #minutes
@@ -46,9 +63,13 @@ def create_remember_me_jwt(user_id, request: Request, response: Response):
     payload = {'sub': user_id, 'exp': expiration_time.timestamp()}
     token = jwt.encode(payload, remember_me_key, algorithm='HS256')
     response.set_cookie(key="remember_me", value=token, httponly=True, secure=True,
-                        samesite='strict', expires=expiration_time)
+                        samesite='strict', expires=expiration_time, domain=get_cookie_domain(request))
     logging.info(f"created remember me token for user: {user_id}")
     request.state.remember_me_created = True
+
+def create_invite_token(expire_date) -> str:
+    payload = {'sub': 'invite', 'exp': expire_date.timestamp()}
+    return jwt.encode(payload, invite_key, algorithm=ALGORITHM)
 
 def create_password_reset_token(user_id):
     expiration_time = datetime.now(timezone.utc) + timedelta(hours=1)
@@ -56,7 +77,7 @@ def create_password_reset_token(user_id):
     token = jwt.encode(payload, forgot_password_key, algorithm=ALGORITHM)
     logging.info(f"created password reset token for user: {user_id}")
     return token
-def decode_jwt(token: str, key: [str, PyJWK], algorithm=ALGORITHM, audience=None, issuer=None):
+def decode_jwt(token: str, key: str | PyJWK, algorithm=ALGORITHM, audience=None, issuer=None):
     """
     Decodes a JWT and returns its content if valid.
     """
@@ -88,21 +109,16 @@ def decode_jwt(token: str, key: [str, PyJWK], algorithm=ALGORITHM, audience=None
         print("Invalid token.")
         return None
 
-async def add_issued_token (jti: str, user_id: str):
+async def add_issued_token(jti: str, exp: int, user_id: str):
     logging.info(f"adding refresh token to list of user's issued tokens in s3 for user: {user_id}")
     try:
-        user_tokens_json = await s3_actions.retrieve("minstrel-accounts", f"accounts/{user_id}/", "tokens")
-        #user_tokens is double encoded to be stored and fetched as a single file
-        #user_tokens_str = json.loads(user_tokens_json)
-        user_tokens = json.loads(user_tokens_json)
+        user_tokens = await s3_actions.retrieve(BUCKET, f"accounts/{user_id}/", "tokens")
         if "issued" not in user_tokens:
             user_tokens["issued"] = []
-        user_tokens["issued"].append(jti)
-        updated_token_json = json.dumps(user_tokens)
-        await s3_actions.store("minstrel-accounts", f"accounts/{user_id}/", "tokens", updated_token_json)
+        user_tokens["issued"].append({"jti": jti, "exp": exp})
+        await s3_actions.store(BUCKET, f"accounts/{user_id}/", "tokens", user_tokens)
     except Exception as e:
-        logging.error(f"Adding user {user_id}'s token to list /"
-                      f"of issued tokens in s3: Exception - {e}", exc_info=True)
+        logging.error(f"Adding user {user_id}'s token to list of issued tokens in s3: Exception - {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e)) from e
 
 #add remember me on this device (computer) but identify device just use remember-me cookie (using ip and user-agent, if either changes, assume new device)
@@ -154,16 +170,14 @@ async def get_auth_tokens(request: Request, response: Response, user_id: str):
     access_token = jwt.encode(access_token_data, secret_key, algorithm=ALGORITHM)
     refresh_token = jwt.encode(refresh_token_data, refresh_secret_key, algorithm=ALGORITHM)
     try:
-        await add_issued_token(jti, user_id)
+        await add_issued_token(jti, refresh_token_expires_unix, user_id)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e)) from e
 
-    #cookies use datetime not unix
-    #secure set to false for http testing
-    response.set_cookie(key="access_token", value=access_token, httponly=True, secure=False, samesite='strict',
-                        expires=access_token_expires)
-    response.set_cookie(key="refresh_token", value=refresh_token, httponly=True, secure=False,
-                        samesite='strict', expires=refresh_token_expires)
+    response.set_cookie(key="access_token", value=access_token, httponly=True, secure=get_cookie_secure(request),
+                        samesite='strict', expires=access_token_expires, domain=get_cookie_domain(request))
+    response.set_cookie(key="refresh_token", value=refresh_token, httponly=True, secure=get_cookie_secure(request),
+                        samesite='strict', expires=refresh_token_expires, domain=get_cookie_domain(request))
     #add JTI to s3 issued_tokens, blacklisted_tokens have user change password instead of checking blacklisted tokens = general and trusted_device account lock
     return jti
     #need to return response somewhere return {"message": "Login Processed"}
@@ -182,20 +196,16 @@ async def verify_user(request, response):
     elif refresh_token_status:
         user_id = refresh_token_status['sub']
         try:
-            user_tokens_json = await s3_actions.retrieve("minstrel-accounts", f"accounts/{user_id}/", "tokens")
-            #user_tokens_str = json.loads(user_tokens_json)
-            user_tokens = json.loads(user_tokens_json)
+            user_tokens = await s3_actions.retrieve(BUCKET, f"accounts/{user_id}/", "tokens")
         except Exception as e:
             logging.error(f"Error retrieving user_tokens for: {user_id} during verification - {e}", exc_info=True)
             raise Exception("Error retrieving user_tokens for verification") from e
-        blacklisted_tokens = user_tokens.get("blacklist", None)
-        if blacklisted_tokens:
-            jti = refresh_token_status['jti']
-            for blacklisted_token in blacklisted_tokens:
-                if blacklisted_token == jti:
-                    logging.info(f"Unable to verify user: {user_id}, using blacklisted token with jti: {jti}")
-                    return False
-
+        jti = refresh_token_status['jti']
+        blacklisted_tokens = user_tokens.get("blacklist", [])
+        if any(entry["jti"] == jti for entry in blacklisted_tokens):
+            logging.info(f"Unable to verify user: {user_id}, using blacklisted token with jti: {jti}")
+            return False
+        await blacklist_issued_token(jti, user_id)
         #use refresh token to get new access token, and update refresh_token(single use)
         await get_auth_tokens(request, response, user_id)
         return user_id
@@ -204,26 +214,55 @@ async def verify_user(request, response):
         return False
     #can potentially identify attack if token is reused (use logging).
 
-async def blacklist_issued_tokens(user_id):
-    user_tokens_json = await s3_actions.retrieve("accounts/", f"{user_id}/tokens")
-    #user_tokens_str = json.loads(user_tokens_json)
-    user_tokens = json.loads(user_tokens_json)
 
-    decoded_tokens = [(token, decode_jwt(token, refresh_secret_key)) for token in user_tokens["issued"]]
-    blacklist = [token for token, token_validity in decoded_tokens if token_validity is not None]
-    remaining_tokens = [token for token, payload in decoded_tokens if payload is None]
+def _prune_blacklist(user_tokens: dict) -> list:
+    """Return the blacklist with expired entries removed, logging the count pruned."""
+    now = datetime.now(timezone.utc).timestamp()
+    existing = user_tokens.get("blacklist", [])
+    pruned = [entry for entry in existing if entry["exp"] > now]
+    pruned_count = len(existing) - len(pruned)
+    if pruned_count:
+        logging.info(f"Pruned {pruned_count} expired entries from blacklist")
+    return pruned
 
-    # Log the actions for blacklisting or discarding tokens
-    for token in blacklist:
-        logging.info(f"Blacklisting valid token for user: {user_id}, jti: {token['jti']}")
-    for token in remaining_tokens:
-        logging.info(f"Discarding expired or invalid token for user: {user_id}, jti: {token['jti']}")
+
+async def blacklist_issued_token(jti: str, user_id: str):
+    """Consume a single refresh token JTI during normal rotation."""
+    user_tokens = await s3_actions.retrieve(BUCKET, f"accounts/{user_id}/", "tokens")
+
+    issued = user_tokens.get("issued", [])
+    consumed = next((entry for entry in issued if entry["jti"] == jti), None)
+    if consumed is None:
+        logging.warning(f"JTI not found in issued list for user: {user_id}, jti: {jti}")
+
+    user_tokens["issued"] = [entry for entry in issued if entry["jti"] != jti]
+    blacklist = _prune_blacklist(user_tokens)
+    if consumed:
+        blacklist.append(consumed)
+    user_tokens["blacklist"] = blacklist
+
+    await s3_actions.store(BUCKET, f"accounts/{user_id}/", "tokens", user_tokens)
+
+
+async def blacklist_issued_tokens(user_id: str):
+    """Invalidate all active refresh tokens. Used for lost device / account compromise."""
+    user_tokens = await s3_actions.retrieve(BUCKET, f"accounts/{user_id}/", "tokens")
+
+    now = datetime.now(timezone.utc).timestamp()
+    issued = user_tokens.get("issued", [])
+
+    active_entries = [entry for entry in issued if entry["exp"] > now]
+    expired_jtis = [entry["jti"] for entry in issued if entry["exp"] <= now]
+
+    for entry in active_entries:
+        logging.info(f"Blacklisting active token for user: {user_id}, jti: {entry['jti']}")
+    for jti in expired_jtis:
+        logging.info(f"Discarding expired issued token for user: {user_id}, jti: {jti}")
 
     user_tokens["issued"] = []
-    user_tokens["blacklist"].extend(blacklist)
+    user_tokens["blacklist"] = _prune_blacklist(user_tokens) + active_entries
 
-    updated_token_json = json.dumps(user_tokens)
-    await s3_actions.store("accounts/", f"{user_id}/tokens", updated_token_json)
+    await s3_actions.store(BUCKET, f"accounts/{user_id}/", "tokens", user_tokens)
 
 #test
 '''

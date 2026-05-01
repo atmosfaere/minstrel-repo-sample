@@ -31,6 +31,17 @@ class HTTPClient:
         except Exception as e:
             raise e
 
+    async def post_with_headers(self, url, headers=None, json=None):
+        """Like post(), but also returns the response headers for forwarding Set-Cookie etc."""
+        await self.start_session()
+        try:
+            async with self.session.post(url, headers=headers, json=json) as response:
+                response.raise_for_status()
+                body = await response.json()
+                return body, response.headers
+        except Exception as e:
+            raise e
+
     async def post_stream(self, url, headers=None, json=None):
         await self.start_session()
         try:

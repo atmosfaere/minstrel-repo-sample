@@ -8,9 +8,14 @@ import os
 
 
 async def authenticate(request: Request, response: Response):
-    # Extract cookies for sending to verification server.
-    cookie_header = "; ".join([f"{key}={value}" for key, value in request.cookies.items()])
-    headers = {"Cookie": cookie_header}
+    _AUTH_COOKIES = {"access_token", "refresh_token", "remember_me"}
+    cookie_header = "; ".join(
+        f"{k}={v}" for k, v in request.cookies.items() if k in _AUTH_COOKIES
+    )
+    headers = {
+        "Cookie": cookie_header,
+        "X-Forwarded-Host": request.headers.get("host", ""),
+    }
     try:
         # Get the base URL from the request or environment variable
         if 'AUTH_SERVER_URL' in os.environ:
@@ -21,13 +26,10 @@ async def authenticate(request: Request, response: Response):
             host = request.headers.get('host', request.url.hostname)
             verify_url = f"{scheme}://{host}/verify"
         
-        # Call the post() method, which already returns JSON
-        auth_data = await http_client.post(verify_url, headers=headers)
+        auth_data, auth_headers = await http_client.post_with_headers(verify_url, headers=headers)
 
-        if 'Set-Cookie' in auth_data:  # This should be checking headers, not auth_data
-            cookies = auth_data.get('Set-Cookie', [])
-            for cookie in cookies:
-                response.headers.append('Set-Cookie', cookie)
+        for cookie in auth_headers.getall('Set-Cookie', []):
+            response.headers.append('Set-Cookie', cookie)
 
         user_id = auth_data.get("user_id")
         if user_id not in users:

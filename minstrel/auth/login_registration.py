@@ -1,4 +1,5 @@
 import time
+import re
 import datetime
 import json
 from datetime import datetime, timezone, timedelta
@@ -80,10 +81,12 @@ async def http_exception_handler(request: Request, exc: StarletteHTTPException):
     print(exc.detail)
     return JSONResponse(content={"detail (specify as desired)": exc.detail}, status_code=exc.status_code)
 '''
-def verify_invite_cookie(request: Request):
+def verify_invite_cookie(request: Request) -> bool:
     invite_token = request.cookies.get("invite_token")
-    if invite_token != "valid":
+    payload = authentication.decode_jwt(invite_token, authentication.invite_key) if invite_token else None
+    if not payload or payload.get("sub") != "invite":
         raise HTTPException(status_code=HTTP_403_FORBIDDEN, detail="Access denied. Valid invite required.")
+    return True
 
 @router.post("/email-availability")
 async def email_availability(request:Request) -> bool:
@@ -133,6 +136,8 @@ async def create_account(request: Request, _: bool = Depends(verify_invite_cooki
         if email is not None:
             if len(email) > 320:
                 raise ValueError("Email length exceeds the maximum allowed limit")
+            if not re.match(r'^[^@\s]+@[^@\s]+\.[^@\s]+$', email):
+                raise ValueError("Invalid email format")
         if len(password) > 128:
             raise ValueError("Password length exceeds the maximum allowed limit")
         if len(username) < 3 or len(username) > 25:
@@ -142,6 +147,7 @@ async def create_account(request: Request, _: bool = Depends(verify_invite_cooki
         #as requests from bad client could overwrite existing accounts
         if await s3_actions.check_key(BUCKET, "email/", email):
             email_exists = True
+            raise HTTPException(status_code=400, detail="Registration information is invalid or already in use.")
             #check before sending validation email for email sign up users
             #if email exists before validation say sending link to verify email, send email saying account already exists direct to sign in, have forgot password option in email
             # if email exists for third party sign up, need to notify (just continue and merge accounts?)
@@ -178,9 +184,7 @@ async def create_account(request: Request, _: bool = Depends(verify_invite_cooki
                            "general_lock": False, "recognized_lock": False,
                            "failed_login_total": 0, "failed_login_from_recognized_month": 0}
         await s3_actions.store(BUCKET, "accounts/", f"{user_id}/account_details", account_details)
-        user_tokens = {}
-        user_tokens_json = json.dumps({})
-        await s3_actions.store("minstrel-accounts", f"accounts/{user_id}/", "tokens", user_tokens_json)
+        await s3_actions.store(BUCKET, f"accounts/{user_id}/", "tokens", {})
         logging.info(f"Account creation successful for username: {username}")
         return {"message": "Account created successfully"}
     except ValueError as ve:
@@ -276,20 +280,19 @@ async def process_invite(request: Request, response: Response):
     accepted_codes = ["aiworlds", "ai worlds"]
     if code.lower() in accepted_codes:
         expire_date = datetime.now(timezone.utc) + timedelta(days=730)
-        response.set_cookie(key="invite_token", value='valid', expires=expire_date, httponly=True, secure=False,
-                            samesite='strict')
-        #return RedirectResponse(url="http://minstrelai.com/sign-in", status_code=303)
-        #return RedirectResponse(url="http://127.0.0.1:5005/sign-in", status_code=303)
+        token = authentication.create_invite_token(expire_date)
+        response.set_cookie(key="invite_token", value=token, expires=expire_date, httponly=True,
+                            secure=authentication.get_cookie_secure(request), samesite='strict')
         return {"success": True, "message": "Valid invite code"}
     raise HTTPException(status_code=400, detail="Invalid invite code")
 
 @router.get("/api/invite-check")
 async def invite_check(request: Request):
     invite_token = request.cookies.get("invite_token")
-    if invite_token == "valid":
+    payload = authentication.decode_jwt(invite_token, authentication.invite_key) if invite_token else None
+    if payload and payload.get("sub") == "invite":
         return {"message": "Invite token is valid"}
-    else:
-        raise HTTPException(status_code=401, detail="Invalid or missing invite token")
+    raise HTTPException(status_code=401, detail="Invalid or missing invite token")
 
 @router.get("/api/auth-check")
 async def auth_check(request: Request, response: Response):
@@ -387,7 +390,7 @@ async def third_party_sign_in(request: Request, response: Response):
     #create account if it doesn't exist, else give minstrel jwt token using user_id
     sub = "sub"
     user_id = await s3_actions.retrieve(BUCKET, "identifier/", sub)
-    jti = authentication.get_auth_tokens(request, response, user_id)
+    jti = await authentication.get_auth_tokens(request, response, user_id)
     #await s3_actions.store(BUCKET, "accounts/", f"{user_id}/tokens", jti)
 
     # if third_party device is stolen, user must deactivate account with third_party for that device in order to secure account
@@ -404,8 +407,7 @@ async def handle_apple_login(request: Request):
 '''
 
 # ensure that sender is Minstrel or the user with user_id, else attacker can sign anyone out
-#@app.post("/lost-device/")
-@router.post("/lost-device/")
+#@router.post("/lost-device/")
 async def lost_device(user_id):
     # if sub = minstrel or user_id
     # make sure not abused by attacker to log legitimate user out of their logged in devices?

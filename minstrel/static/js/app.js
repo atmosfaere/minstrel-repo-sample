@@ -6,6 +6,7 @@ import * as worldPage from './world-page.js'
 import * as chatPage from './conversation/conversation.js'
 import * as createWorld from './create-world.js'
 import * as createCharacter from './create-character.js'
+import * as notes from '/static/notes/js/notes-app.js'
 
 // Cache busting
 (() => {
@@ -117,6 +118,8 @@ import * as createCharacter from './create-character.js'
     }*/
 })();
 
+window.__MINSTREL_APP__ = true;
+
 export const baseUrl = '';
 export const domainAndPort = window.location.host; // This will automatically use the current domain
 //export const baseUrl = 'http://192.168.40.180:5004';
@@ -152,6 +155,7 @@ function injectAppNav(page) {
     }
 
     const adventureNavCurrent = isAdventureNavPage(page) ? 'page' : 'false';
+    const notesNavCurrent = page === 'notes' ? 'page' : 'false';
 
     bar.innerHTML = `
         <nav class="app-nav" role="navigation" aria-label="App pages">
@@ -164,6 +168,19 @@ function injectAppNav(page) {
                     <svg class="app-nav-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                         <circle cx="12" cy="12" r="10"/>
                         <path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+                    </svg>
+                </button>
+                <button type="button"
+                        class="app-nav-item"
+                        data-nav-page="notes"
+                        aria-label="Notes"
+                        aria-current="${notesNavCurrent}">
+                    <svg class="app-nav-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                        <polyline points="14 2 14 8 20 8"/>
+                        <line x1="16" y1="13" x2="8" y2="13"/>
+                        <line x1="16" y1="17" x2="8" y2="17"/>
+                        <polyline points="10 9 9 9 8 9"/>
                     </svg>
                 </button>
             </div>
@@ -457,6 +474,22 @@ function loadModule(page) {
                         console.log("world page images loaded, initializing chat");
                         injectAppNav(page);
                         chatPage.load(page);
+                    });
+                    break;
+                case 'notes':
+                    document.body.className = 'default-body';
+                    if (!document.querySelector('link[data-page="notes"]')) {
+                        const link = document.createElement('link');
+                        link.rel = 'stylesheet';
+                        link.href = '/static/notes/css/notes.css';
+                        link.dataset.page = 'notes';
+                        document.head.appendChild(link);
+                    }
+                    tempContainer.innerHTML = html;
+                    waitForImagesToLoad(tempContainer, () => {
+                        swapBodyFromTemp(tempContainer);
+                        injectAppNav(page);
+                        notes.load();
                     });
                     break;
                 case '':
