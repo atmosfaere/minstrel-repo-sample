@@ -28,17 +28,6 @@ from storage.data_store import users
 #just for testing all on one server
 router = APIRouter()
 
-#import third_party_auth
-'''
-pwd_context = CryptContext(
-    schemes=["argon2id"],
-    default="argon2id",  # Use Argon2id variant
-    argon2id__memory_cost=19 * 1024,  # 19 MiB of memory (memory_cost is in KiB)
-    argon2id__time_cost=2,  # 2 iterations
-    argon2id__parallelism=1,  # 1 degree of parallelism (single thread)
-    deprecated="auto"
-)'''
-
 ph = PasswordHasher(
     time_cost=2,                # Number of iterations
     memory_cost=19 * 1024,      # Memory usage in KiB
@@ -102,7 +91,6 @@ async def email_availability(request:Request) -> bool:
     return JSONResponse(content={"available": not exists})
 
 #wasn't being used by create account
-#@app.post("/username-availability/")
 @router.post("/username-availability")
 async def username_availability(request:Request) -> bool:
     """ Endpoint to check availability of username. """
@@ -308,23 +296,7 @@ async def auth_check(request: Request, response: Response):
     else:
         raise HTTPException(status_code=401, detail="No authentication token provided")
 
-"""
-#@app.get("/sign-in/")
-@router.get("/sign-in")
-async def sign_in(request: Request, response: Response, _: bool = Depends(verify_invite_cookie)):
-    #see if request has authentication cookies
-    access_token_cookie = request.cookies.get("access_token")
-    if access_token_cookie:
-        verified = authentication.verify_user(request, response)
-        if verified:
-            return RedirectResponse(url="http://127.0.0.1:5005/", status_code=302)
-            #return RedirectResponse(url="https://minstrelai.com", status_code=302)
-        else:
-            return FileResponse("templates/sign_on.html")
-    else:
-        return FileResponse("templates/sign_on.html")"""
 
-#@app.post("/sign-in/")
 @router.post("/sign-in")
 async def submit_login(request:Request, response: Response, _: bool = Depends(verify_invite_cookie)):
     data = await request.json()
@@ -342,11 +314,28 @@ async def submit_login(request:Request, response: Response, _: bool = Depends(ve
     else:
         raise ValueError("Both email and username cannot be None")
 
-    user_id = await s3_actions.retrieve(BUCKET, prefix, email_or_username)
-    # account lock = reset password(email verification) or verify email
-    account_details = await s3_actions.retrieve(BUCKET, f"accounts/{user_id}/", "account_details")
-    #account_details = json.loads(account_data)
-    hashed_password = account_details['hashed_password']
+    try:
+        user_id = await s3_actions.retrieve(BUCKET, prefix, email_or_username)
+        if not user_id:
+            raise HTTPException(status_code=404, detail="User not found")
+            
+        # account lock = reset password(email verification) or verify email
+        account_details = await s3_actions.retrieve(BUCKET, f"accounts/{user_id}/", "account_details")
+        if not account_details or 'hashed_password' not in account_details:
+            raise HTTPException(status_code=404, detail="Account details not found")
+            
+        #account_details = json.loads(account_data)
+        hashed_password = account_details['hashed_password']
+    except HTTPException as e:
+        if e.status_code == 404:
+            logging.info(f"Failed login attempt for non-existent user/account: {email_or_username}")
+            # Perform a dummy hash to mitigate timing attacks
+            try:
+                ph.hash(password)
+            except Exception:
+                pass
+            raise HTTPException(status_code=401, detail="Invalid credentials")
+        raise
 
     try:
         ph.verify(hashed_password, password)

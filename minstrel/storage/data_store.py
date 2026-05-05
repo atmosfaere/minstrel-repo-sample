@@ -16,7 +16,7 @@ simulated_characters = {}
 registered_users = []
 
 event_queue = []
-backup_queue = {}
+backup_queue = []
 
 
 #simulated_characters/id/world

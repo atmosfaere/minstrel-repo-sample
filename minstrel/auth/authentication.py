@@ -58,6 +58,7 @@ def is_mobile_user_agent(request: Request) -> bool:
     ]
     return any(indicator in user_agent for indicator in mobile_indicators)
 
+
 def create_remember_me_jwt(user_id, request: Request, response: Response):
     expiration_time = datetime.now(timezone.utc) + timedelta(days=remember_me_exp_length)
     payload = {'sub': user_id, 'exp': expiration_time.timestamp()}
@@ -67,9 +68,11 @@ def create_remember_me_jwt(user_id, request: Request, response: Response):
     logging.info(f"created remember me token for user: {user_id}")
     request.state.remember_me_created = True
 
+
 def create_invite_token(expire_date) -> str:
     payload = {'sub': 'invite', 'exp': expire_date.timestamp()}
     return jwt.encode(payload, invite_key, algorithm=ALGORITHM)
+
 
 def create_password_reset_token(user_id):
     expiration_time = datetime.now(timezone.utc) + timedelta(hours=1)
@@ -77,6 +80,8 @@ def create_password_reset_token(user_id):
     token = jwt.encode(payload, forgot_password_key, algorithm=ALGORITHM)
     logging.info(f"created password reset token for user: {user_id}")
     return token
+
+
 def decode_jwt(token: str, key: str | PyJWK, algorithm=ALGORITHM, audience=None, issuer=None):
     """
     Decodes a JWT and returns its content if valid.
@@ -99,14 +104,23 @@ def decode_jwt(token: str, key: str | PyJWK, algorithm=ALGORITHM, audience=None,
                              audience=audience, issuer=issuer, options=options
         )
         return payload
-    except ExpiredSignatureError:
-        print("Token has expired.")
+        
+    except ExpiredSignatureError as e:
+        try:
+            sub = jwt.decode(token, options={"verify_signature": False, "verify_exp": False}).get("sub", "unknown")
+        except Exception:
+            sub = "unknown"
+        logging.info(f"Token expired for sub='{sub}': {e}")
         return None
-    except InvalidAudienceError:
-        print("Invalid aud")
+    except InvalidAudienceError as e:
+        try:
+            sub = jwt.decode(token, options={"verify_signature": False, "verify_exp": False, "verify_aud": False}).get("sub", "unknown")
+        except Exception:
+            sub = "unknown"
+        logging.warning(f"Invalid audience for sub='{sub}' (expected {audience}): {e}")
         return None
-    except InvalidTokenError:
-        print("Invalid token.")
+    except InvalidTokenError as e:
+        logging.warning(f"Invalid token error: {e}")
         return None
 
 async def add_issued_token(jti: str, exp: int, user_id: str):
@@ -195,17 +209,18 @@ async def verify_user(request, response):
 
     elif refresh_token_status:
         user_id = refresh_token_status['sub']
-        try:
-            user_tokens = await s3_actions.retrieve(BUCKET, f"accounts/{user_id}/", "tokens")
-        except Exception as e:
-            logging.error(f"Error retrieving user_tokens for: {user_id} during verification - {e}", exc_info=True)
-            raise Exception("Error retrieving user_tokens for verification") from e
         jti = refresh_token_status['jti']
-        blacklisted_tokens = user_tokens.get("blacklist", [])
-        if any(entry["jti"] == jti for entry in blacklisted_tokens):
-            logging.info(f"Unable to verify user: {user_id}, using blacklisted token with jti: {jti}")
-            return False
-        await blacklist_issued_token(jti, user_id)
+        async with s3_actions.get_user_lock(BUCKET, f"accounts/{user_id}/"):
+            try:
+                user_tokens = await s3_actions.retrieve(BUCKET, f"accounts/{user_id}/", "tokens")
+            except Exception as e:
+                logging.error(f"Error retrieving user_tokens for: {user_id} during verification - {e}", exc_info=True)
+                raise Exception("Error retrieving user_tokens for verification") from e
+            if any(entry["jti"] == jti for entry in user_tokens.get("blacklist", [])):
+                logging.info(f"Unable to verify user: {user_id}, using blacklisted token with jti: {jti}")
+                return False
+            # Blacklist the consumed token, must stay inside the lock to prevent race condition
+            await blacklist_issued_token(jti, user_id)
         #use refresh token to get new access token, and update refresh_token(single use)
         await get_auth_tokens(request, response, user_id)
         return user_id
