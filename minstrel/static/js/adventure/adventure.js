@@ -1,7 +1,7 @@
 import { navigatePage, chat, setWorld, baseUrl, world, socket } from '../app.js';
 import { createAriaLiveRegion, queueAnnouncement } from '../aria.js';
 import { sanitizeHTML } from '../utility.js';
-import { closeSimulationAccordion, fetchCharacterSimulationStatus } from './simulation.js';
+import { closeSimulationAccordion, fetchCharacterSimulationStatus } from './simulation-menu.js';
 
 // ---------------------------------------------------------------------------
 // World feature span utilities
@@ -19,22 +19,22 @@ function processStaticMessageIds(message) {
     let processedMessage = message.replace(/\[([^\]]+)\]\s*@@([^@]+)@@/g, (match, featureName, id) => {
         return createWorldFeatureSpan(featureName, id);
     });
-    
+
     // Pattern 2: [feature_name @@id@@] (ID inside brackets)
     processedMessage = processedMessage.replace(/\[([^@]+)\s+@@([^@]+)@@\]/g, (match, featureName, id) => {
         return createWorldFeatureSpan(featureName, id);
     });
-    
+
     // Pattern 3: [feature_name] [@@id@@] (ID in separate brackets)
     processedMessage = processedMessage.replace(/\[([^\]]+)\]\s*\[@@([^@]+)@@\]/g, (match, featureName, id) => {
         return createWorldFeatureSpan(featureName, id);
     });
-    
+
     // Pattern 4: feature_name @@id@@ (no brackets)
     processedMessage = processedMessage.replace(/([^\s]+)\s+@@([^@]+)@@/g, (match, featureName, id) => {
         return createWorldFeatureSpan(featureName, id);
     });
-    
+
     return processedMessage;
 }
 
@@ -111,10 +111,10 @@ export function setupWorldLoadingOverlay() {
     initialConversationLoaded = false;
 
     worldLoadingOverlay.classList.remove('hidden');
-    
+
     // Announce to screen readers that loading has started
-    const loadingMessage = worldLoadingMode === 'creating' 
-        ? 'Creating world. Please wait.' 
+    const loadingMessage = worldLoadingMode === 'creating'
+        ? 'Creating world. Please wait.'
         : 'Loading world. Please wait.';
     createAriaLiveRegion();
     queueAnnouncement(loadingMessage);
@@ -237,7 +237,7 @@ function hideWorldLoadingOverlay() {
         clearTimeout(worldLoadingHistoryTimeoutId);
         worldLoadingHistoryTimeoutId = null;
     }
-    
+
     // Announce to screen readers that loading is complete
     queueAnnouncement('World loaded and ready.');
 }
@@ -304,7 +304,7 @@ export function receiveWorldChat(content) {
 
 export function handleSetWorld(content) {
     const worldId = content.world_id;
-    
+
     if (worldId) {
         setWorld(worldId);
         console.log('World updated successfully to:', worldId);
@@ -595,7 +595,7 @@ export function addPlayerIcon() {
         fileInput.accept = 'image/*';
         fileInput.style.display = 'none';
 
-        fileInput.addEventListener('change', function(event) {
+        fileInput.addEventListener('change', function (event) {
             const file = event.target.files[0];
             if (file) {
                 console.log('Selected file:', file.name);
@@ -645,7 +645,7 @@ export function addIcon() {
     fileInput.accept = 'image/*';
     fileInput.style.display = 'none';
 
-    fileInput.addEventListener('change', function(event) {
+    fileInput.addEventListener('change', function (event) {
         const file = event.target.files[0];
         if (file) {
             console.log('Selected file:', file.name);

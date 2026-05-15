@@ -1,5 +1,4 @@
 import { baseUrl, world } from './app.js';
-import { makeSocket } from './conversation/conversation.js';
 
 let simulationContainer;
 let simulationSearch;
@@ -24,10 +23,10 @@ export function initializeSimulationView() {
 	if (!simulationUiInitialized) {
 		createSimulationUI();
 	}
-	
+
 	// Switch the view
 	window.chatModule.mode = 'simulation';
-	
+
 	// Clear existing messages robustly
 	if (chatContainer) {
 		while (chatContainer.firstChild) {
@@ -88,7 +87,9 @@ function exitSimulationMode() {
 	messageScrollContainer.style.display = '';
 	if (controlArea) controlArea.style.display = '';
 	// Potentially reload original chat messages if needed
-	window.chatModule.makeSocket();
+
+	//Re-initialize the socket with the new mode
+	window.chatModule.setupSocket();
 
 	// Move focus back to the chat input field
 	const input = document.querySelector('.input-field');
@@ -112,7 +113,7 @@ async function fetchSimulatedCharacters() {
 
 function populateCharacterSelect(characters) {
 	simulationCharacterSelect.innerHTML = '<option value="" disabled selected>Select a character</option>';
-	
+
 	// Get current user ID from JWT token
 	const currentUserId = getCurrentUserId();
 
@@ -149,7 +150,7 @@ function onCharacterSelect(event) {
 		window.chatModule.simulationCharacterId = simulationCharacterId;
 		chatContainer.innerHTML = ''; // Clear for new character chat
 		messageScrollContainer.style.display = '';
-		makeSocket();
+		window.chatModule.setupSocket();
 	}
 }
 

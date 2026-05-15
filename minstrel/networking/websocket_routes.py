@@ -63,6 +63,7 @@ async def get_party_id(websocket: WebSocket):
         party_id = wsm.get_room_id(websocket)
             
         response = {
+            'channel': 'conversation',
             'route': 'party id response',
             'content': {
                 'party_id': party_id
@@ -81,6 +82,7 @@ async def check_friend_status(websocket: WebSocket, target_user_id: str = None):
         is_friend = False
 
         response = {
+            'channel': 'conversation',
             'route': 'friend status response',
             'content': {
                 'is_friend': is_friend,

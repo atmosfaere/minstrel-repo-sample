@@ -36,7 +36,8 @@ import {
     handleToggleSimulationKey,
     changeSimulationType,
     onSimulationFrequencyChanged,
-} from '../adventure/simulation.js';
+} from '../adventure/simulation-menu.js';
+import { addSocketMessageListener } from '../socket/socket.js';
 
 let isStreaming = false;
 const STREAM_TIMEOUT = 15000;
@@ -79,16 +80,15 @@ let hasReceivedFirstStreamMessage = false;
 
 let characterMenu = null;
 
-
-let isConnecting = false;
 let wasBackgrounded = false;
 
+//avoid circular imports
 window.chatModule = {
     set mode(value) { mode = value; },
     get mode() { return mode; },
     set simulationCharacterId(value) { simulationCharacterId = value; },
     get simulationCharacterId() { return simulationCharacterId; },
-    makeSocket
+    setupSocket
 };
 
 export function load(page) {
@@ -118,7 +118,7 @@ export function load(page) {
         setupWorldIndexImageLoading(worldIndexButtonImg);
     }
 
-    
+
     autoResizeInputField();
     //world = sessionStorage.getItem("world")
     //chat = sessionStorage.getItem("chat")
@@ -128,7 +128,7 @@ export function load(page) {
     } else if (page === "chat") {
         mode = 'chat';
     }
-    makeSocket();
+    setupSocket();
 }
 
 function bindEvents() {
@@ -147,7 +147,7 @@ function bindEvents() {
     messageScrollContainer.addEventListener('scroll', function () {
         closeCharacterMenu();
         closePlayerMenu();
-        
+
         var scrollHeight = messageScrollContainer.scrollHeight;
         var clientHeight = messageScrollContainer.clientHeight;
         var scrollTop = messageScrollContainer.scrollTop;
@@ -269,63 +269,19 @@ function bindEvents() {
     document.getElementById('close-player-menu-accessibility').addEventListener('click', closePlayerMenu);
 }
 
-export async function makeSocket() {
-    // Prevent multiple simultaneous connections
-    if (isConnecting) {
-        console.log("Socket connection already in progress");
-        return;
-    }
-    
-    if (socket && socket.readyState === WebSocket.OPEN) {
-        console.log("Socket already connected");
-    }
-    
-    isConnecting = true;
-    
-    if (socket) {
-        try {
-            socket.close();
-            // Wait for close to complete
-            await new Promise(resolve => {
-                if (socket.readyState === WebSocket.CLOSED) {
-                    resolve();
-                } else {
-                    socket.onclose = () => resolve();
-                }
-            });
-        } catch (e) {
-            console.log("Error closing existing socket:", e);
-        }
-        setSocket(null);
-    }
-    
-    const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const wsHost = window.location.host; // 'host' includes hostname and port if port is specified
-    //switch to /wss once using https
-    const wsPath = 'ws';
-    const wsUrl = `${wsProtocol}//${wsHost}/${wsPath}`;
-    //socket = new WebSocket(`ws://${domainAndPort}/ws`);
-    
-    try {
-        setSocket(new WebSocket(wsUrl));
-    } catch (error) {
-        console.error("Failed to create WebSocket:", error);
-        isConnecting = false;
-        return;
-    }
+export async function setupSocket() {
+    await makeSocket();
 
-    socket.addEventListener('open', function (event) {
-        console.log("WebSocket opened successfully");
-        isConnecting = false;
-        wasBackgrounded = false; // Reset background flag on successful connection
-        
+    if (socket && socket.readyState === WebSocket.OPEN) {
+        //wasBackgrounded = false; // Reset background flag on successful connection
+
         chatContainer = document.querySelector(".chat-container");
         if (chatContainer) {
             while (chatContainer.firstChild) {
                 chatContainer.removeChild(chatContainer.firstChild);
             }
         }
-        
+
         //let the server websocket manager associate the websocket instance with a room and mode
         let room_id = null;
 
@@ -340,37 +296,14 @@ export async function makeSocket() {
         }
         console.log("socketCharacterId, making socket", socketCharacterId);
         socket.send(JSON.stringify({ room_id, mode, world, "character": socketCharacterId }));
-        
+
         // Start heartbeat for activity tracking (only in world mode)
         if (mode === 'world') {
             //startHeartbeat(socket);
         }
-    });
+    }
 
-    // Event handler for handling incoming WebSocket messages
-    socket.onmessage = function (event) {
-        //console.log("WebSocket message received:", event.data);
-        try {
-            const data = JSON.parse(event.data); // Assuming the incoming message is in JSON format
-            processMessage(data);
-        } catch (error) {
-            console.error("Error parsing message data:", error);
-        }
-    };
-
-    // Reset loading flag on connection errors/closure
-    socket.onerror = function (error) {
-        console.error("WebSocket error:", error);
-        isLoadingEarlierMessages = false;
-        isConnecting = false;
-    };
-
-    socket.onclose = function (event) {
-        console.log("WebSocket closed:", event.code, event.reason);
-        isLoadingEarlierMessages = false;
-        isConnecting = false;
-        //stopHeartbeat(); // Stop heartbeat when connection closes
-    };
+    addSocketMessageListener(processSocketMessage);
 
     isLoadingEarlierMessages = false;
 }
@@ -387,6 +320,9 @@ function retrieveEarlierMessages() {
     console.log("retrieve earlier scroll request", messageStartIndex);
     isLoadingEarlierMessages = true;
     socket.send(JSON.stringify({ 'route': 'retrieve earlier messages', 'content': { index: messageStartIndex } }));
+    // if send fails
+    // isLoadingEarlierMessages = false;
+    // 
 }
 
 function sendMessage() {
@@ -403,7 +339,7 @@ function sendMessage() {
 
     if (socket.readyState === WebSocket.CLOSING || socket.readyState === WebSocket.CLOSED) {
         console.warn("Socket is closed or closing. Reconnecting...");
-        makeSocket(); 
+        setupSocket();
     }
 
     console.log("sending userMessage");
@@ -430,7 +366,7 @@ function streamResponse(chunk) {
     if (!hasReceivedFirstStreamMessage) {
         hasReceivedFirstStreamMessage = true;
         responseStreamElement.innerHTML = "";
-        
+
         // Recreate and reattach currentTextNode since innerHTML cleared it
         currentTextNode = document.createTextNode("");
         responseStreamElement.appendChild(currentTextNode);
@@ -442,14 +378,14 @@ function streamResponse(chunk) {
         console.log("received opening bracket");
         streamReceivedOpeningBracket = true;
     }
-    
+
     // Only check for closing bracket if opening bracket was found
-    if (streamReceivedOpeningBracket && chunk.includes(']')  && !streamReceivedClosingAtDelimiter) {
+    if (streamReceivedOpeningBracket && chunk.includes(']') && !streamReceivedClosingAtDelimiter) {
         console.log("chunk has closing bracket");
         streamReceivedOpeningBracket = false;
         streamReceivedClosingBracket = true;
         closingBracketInChunk = true;
-        
+
         // Extract the feature name from between brackets
         const content = processStreamElement.textContent;
         const bracketMatch = content.match(/\[([^\]]+)\]/);
@@ -480,10 +416,10 @@ function streamResponse(chunk) {
             receivingDelimitedId = true;
             openingAtDelimiterInChunk = true;
         }
-        
-        
+
+
     }
-    
+
     // Check for @@ pattern (opening at symbol + delimiter)
     if (!openingAtSymbolInChunk && streamReceivedOpeningAtSymbol && !streamReceivedClosingAtSymbol) {
         if (chunk.includes('@')) {
@@ -542,7 +478,7 @@ function streamResponse(chunk) {
         }
 
         receivingDelimitedId = false;
-        streamReceivedClosingAtDelimiter  = false;
+        streamReceivedClosingAtDelimiter = false;
         originalMessageStreamElement.textContent += chunk;
         return;
     }
@@ -555,7 +491,7 @@ function streamResponse(chunk) {
         // Force a reflow to ensure the DOM is updated
         void responseStreamElement.offsetHeight;
         // Force a repaint
-        requestAnimationFrame(() => {});
+        requestAnimationFrame(() => { });
 
         queueAnnouncement(processStreamElement.textContent);
 
@@ -572,7 +508,7 @@ function streamResponse(chunk) {
     if (!receivingDelimitedId) {
         currentTextNode.textContent += chunk.replace(/[\[\]]/g, '');
         //console.log("Added to currentTextNode:", chunk, "Total visible:", currentTextNode.textContent);
-    } 
+    }
 
     originalMessageStreamElement.textContent += chunk;
     processStreamElement.textContent += chunk;
@@ -583,7 +519,7 @@ function streamResponse(chunk) {
         const textElement = currentTextNode.parentElement;
         const rect = textElement.getBoundingClientRect();
         const containerRect = messageScrollContainer.getBoundingClientRect();
-        
+
         // If the top of the text element is visible (not above the container), scroll to bottom
         if (rect.top >= containerRect.top && !scrollingMessages) {
             messageScrollContainer.scrollTo({ top: messageScrollContainer.scrollHeight, behavior: 'smooth' });
@@ -606,23 +542,23 @@ function addObjectIdMenuSpan(id) {
     const bracketRegex = /\[([^\]]+)\]/g;
     let match;
     let lastMatch = null;
-    
+
     // Find the index of the @@id@@ pattern - use the extracted ID from the regex match
     const idMatch = text.match(/@@([^@]+)@@/);
     const extractedId = idMatch ? idMatch[1] : id;
     const idPattern = `@@${extractedId}@@`;
     const idIndex = text.indexOf(idPattern);
-    
+
     // Find the bracket match where the closing bracket comes before the @@id@@
     while ((match = bracketRegex.exec(text)) !== null) {
         const closingBracketIndex = match.index + match[0].length - 1; // Index of ']'
-        
+
         // Only consider this match if its closing bracket comes before the @@id@@
         if (closingBracketIndex < idIndex) {
             lastMatch = match;
         }
     }
-    
+
     console.log("addobject found match, text: ", text, "id: ", id, "idIndex: ", idIndex, "match: ", lastMatch);
 
     if (!lastMatch) {
@@ -630,7 +566,7 @@ function addObjectIdMenuSpan(id) {
     }
     const objectName = lastMatch[1].trim();
     const beforeText = text.slice(0, lastMatch.index);
-    
+
     // Find text after the ID pattern @@id@@
     const afterIdMatch = text.match(/@@[^@]+@@(.*)$/);
     let afterText = afterIdMatch ? afterIdMatch[1] : '';
@@ -641,7 +577,7 @@ function addObjectIdMenuSpan(id) {
 
     // Create the span HTML string
     const spanHTML = createWorldFeatureSpan(objectName, id);
-    
+
     // Create a DOM element from the HTML string
     const tempNode = document.createElement('p');
     tempNode.innerHTML = spanHTML;
@@ -653,7 +589,7 @@ function addObjectIdMenuSpan(id) {
     } else {
         responseStreamElement.appendChild(span);
     }
-    
+
     // Add any remaining text after the ID and create new text node for future streaming
     const afterTextNode = document.createTextNode(afterText);
     responseStreamElement.appendChild(afterTextNode);
@@ -685,7 +621,7 @@ function createLeftContainer(message, username, userId, characterName, character
                 </div>
             </div>
         </div>
-    `;   
+    `;
     // Attach menu event listener to character name
     const characterNameButton = newFlexContainer.querySelector(".user-name");
 
@@ -698,7 +634,7 @@ function createLeftContainer(message, username, userId, characterName, character
 
         characterNameButton.addEventListener('click', async function (event) {
             event.stopPropagation();
-            
+
             await openPlayerSettingsMenu(characterNameButton);
             setTimeout(() => {
                 const menu = document.getElementById('player-settings-menu');
@@ -709,7 +645,7 @@ function createLeftContainer(message, username, userId, characterName, character
             }, 0);
         });
     }
-    
+
     if (id) {
         const img = newFlexContainer.querySelector('img');
         const imageUrl = `${baseUrl}/static/images/${id}.png`;
@@ -734,7 +670,7 @@ function createLeftContainer(message, username, userId, characterName, character
     return newFlexContainer.querySelector('.message-text p');
 }
 
-function createRightContainer(message, name = "", id = "", partyId = "",prepend = false) {
+function createRightContainer(message, name = "", id = "", partyId = "", prepend = false) {
     const processedMessage = processMessageText(message);
     const newFlexContainer = document.createElement("div");
     newFlexContainer.classList.add("response-container");
@@ -744,10 +680,10 @@ function createRightContainer(message, name = "", id = "", partyId = "",prepend 
         name = "";
     }
     id = id ?? "";
-    
+
     const shouldHideNameButton = name === "" || name === "none";
     const hiddenAttribute = shouldHideNameButton ? 'hidden' : '';
-    
+
     newFlexContainer.innerHTML = `
         <button
             class="character-name"
@@ -809,7 +745,7 @@ function createRightContainer(message, name = "", id = "", partyId = "",prepend 
     // Attach event delegation for world-feature-span clicks
     const messageTextDiv = newFlexContainer.querySelector('.message-text');
     if (!messageTextDiv._featureClickAttached) {
-        messageTextDiv.addEventListener("click", function(e) {
+        messageTextDiv.addEventListener("click", function (e) {
             const span = e.target.closest(".world-feature-span");
             if (!span) return;
             const objectId = span.dataset.objectId;
@@ -817,7 +753,7 @@ function createRightContainer(message, name = "", id = "", partyId = "",prepend 
                 console.warn("Clicked .world-feature-span without a valid objectId.", { span, event: e });
                 return;
             }
-            if (objectId.startsWith("c"))      openCharacterMenu(span);
+            if (objectId.startsWith("c")) openCharacterMenu(span);
             else if (objectId.startsWith("l")) openLocationMenu(span);
             else if (objectId.startsWith("p")) openPlayerCharacterMenu(span);
         });
@@ -850,8 +786,13 @@ function loadCharacterIcon(url, imgElement) {
     };
 }
 
-function processMessage(data) {
+function processSocketMessage(data) {
     console.log("received ws message");
+
+    if (data.channel !== 'conversation') {
+        return;
+    }
+
     switch (data.route) {
         case 'server message':
             handleServerMessage(data);
@@ -961,7 +902,7 @@ function handleSetSender(content) {
     if (content.sender === "narrator") {
         responseCharacter = null;
     }
-    
+
     delimitedId = '';
     // reset flag that shows currently streaming delimited id
     receivingDelimitedId = false;
@@ -975,15 +916,15 @@ function handleSetSender(content) {
     //responseStreamElement.textContent = ""; // Clear any existing content
     currentTextNode = document.createTextNode("");
     responseStreamElement.appendChild(currentTextNode);
-    
+
     // Initialize screen reader accessibility for new response
     createAriaLiveRegion();
     resetAriaAnnouncements();
-    
+
     // Start processing animation
     hasReceivedFirstStreamMessage = false;
     startProcessingAnimation();
-    
+
     // Scroll to bottom
     messageScrollContainer.scrollTo({ top: messageScrollContainer.scrollHeight, behavior: 'smooth' });
 }
@@ -991,17 +932,17 @@ function handleSetSender(content) {
 function startProcessingAnimation() {
     processingStep = 0;
     const timeInterval = 170;
-    
+
     const processingAnimationInterval = setInterval(() => {
         if (hasReceivedFirstStreamMessage) {
             // Stop animation when first stream message arrives
             clearInterval(processingAnimationInterval);
             return;
         }
-        
+
         const dots = '.'.repeat(processingStep);
         const processingText = `Processing${dots}`;
-        
+
         if (currentTextNode) {
             currentTextNode.textContent = processingText;
         }
@@ -1057,7 +998,7 @@ function addConversation(content) {
     } else {
         console.log("no startIndex received for messages");
     }
-    
+
     messageScrollContainer.scrollTo({ top: messageScrollContainer.scrollHeight, behavior: 'auto' });
 
     markConversationLoaded();
@@ -1066,9 +1007,9 @@ function addConversation(content) {
 function addEarlierMessages(content) {
     console.log('adding earlier messages');
     console.log('Received data:', JSON.stringify(content));
-    
+
     isLoadingEarlierMessages = false;
-    
+
     if (content.messages && Array.isArray(content.messages)) {
         for (let i = content.messages.length - 1; i >= 0; i--) {
             let item = content.messages[i];

@@ -59,7 +59,7 @@ async def simulate_character(world, character_id):
     room_websockets = [connection['websocket'] for connection in room['connections']]
     asyncio.create_task(
         wsm.send_room(websockets=room_websockets,
-                      message={"route": 'user message',
+                      message={'channel': 'conversation', "route": 'user message',
                                "content": {'username': None, 'user_id': user_id, 'character': character_name, 'character_id': character_id, 'text': action}})
     )
 
@@ -103,7 +103,7 @@ async def simulate_character(world, character_id):
 
     finally:
         if not error_occurred:
-            asyncio.create_task(wsm.send_room(websockets=room_websockets, message={"route": "response stream", "content": {'word': 'END_OF_STREAM'}}))
+            asyncio.create_task(wsm.send_room(websockets=room_websockets, message={'channel': 'conversation', "route": "response stream", "content": {'word': 'END_OF_STREAM'}}))
         else:
             if room['conversation']:
                 room['conversation'].pop()

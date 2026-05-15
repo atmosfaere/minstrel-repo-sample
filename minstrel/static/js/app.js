@@ -130,7 +130,6 @@ export const nonce = document.querySelector('meta[name="csp-nonce"]').getAttribu
 
 export let world = null;
 export let chat = null;
-export let socket = null;
 
 let isWorldInvite = null;
 let worldInviteUrl = null;
@@ -297,7 +296,7 @@ window.onload = async () => {
             }
         }
 
-        
+
     } catch (error) {
         console.error('Error checking authentication:', error);
         navigatePage('invite');
@@ -305,7 +304,7 @@ window.onload = async () => {
 
     //const path = window.location.pathname;
     //change to just invite or / once not serving html through endpoint
-    
+
 };
 
 export function navigatePage(page) {
@@ -325,7 +324,7 @@ export function navigatePage(page) {
     //history.pushState({ page }, `${page}`, `/${page}`);
     history.pushState({ page: baseUrl }, "", "/");
 
-    
+
 
     loadModule(page);
 }
@@ -371,7 +370,7 @@ function loadModule(page) {
                 case 'sign-in':
                     //document.body.className = 'sign-in-body'; was removing styles from registration page before sign-in was displayed, moved below
                     tempContainer.innerHTML = html;
-                    
+
 
 
                     // Wait for all images to load
@@ -499,7 +498,7 @@ function loadModule(page) {
                     break;
                 default:
                     mainBody.innerHTML = html;
-                    //Home.load(); // Default to home if unknown
+                //Home.load(); // Default to home if unknown
             }
             currentPage = page;
             // App nav is injected inside waitForImagesToLoad callbacks so the DOM is the
@@ -595,9 +594,6 @@ export function setChat(value) {
     chat = value;
 }
 
-export function setSocket(value) {
-    socket = value;
-}
 function loginSuccess() {
     sessionStorage.setItem('isAuthenticated', 'true');
     navigatePage('home');
