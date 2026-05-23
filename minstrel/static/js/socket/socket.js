@@ -1,6 +1,7 @@
 export let socket = null;
 
-const messageListeners = new Set();
+const socketResetListeners = new Set();
+const socketMessageListeners = new Set();
 
 let isConnecting = false;
 
@@ -71,15 +72,25 @@ export async function makeSocket() {
     socket.addEventListener('open', function (event) {
         console.log("WebSocket opened successfully");
         isConnecting = false;
+
+        socketResetListeners.forEach(listener => listener());
     });
 }
 
+export function addSocketResetListener(listener) {
+    socketResetListeners.add(listener);
+}
+
+export function removeSocketResetListener(listener) {
+    socketResetListeners.delete(listener);
+}
+
 export function addSocketMessageListener(listener) {
-    messageListeners.add(listener);
+    socketMessageListeners.add(listener);
 }
 
 export function removeSocketMessageListener(listener) {
-    messageListeners.delete(listener);
+    socketMessageListeners.delete(listener);
 }
 
 export function setSocket(value) {

@@ -1,4 +1,5 @@
-import { navigatePage, chat, setWorld, baseUrl, world, socket } from '../app.js';
+import { navigatePage, chat, setWorld, baseUrl, world } from '../app.js';
+import { socket } from '../socket/socket.js';
 import { createAriaLiveRegion, queueAnnouncement } from '../aria.js';
 import { sanitizeHTML } from '../utility.js';
 import { closeSimulationAccordion, fetchCharacterSimulationStatus } from './simulation-menu.js';

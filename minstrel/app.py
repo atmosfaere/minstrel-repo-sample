@@ -291,49 +291,27 @@ async def websocket_endpoint(websocket: WebSocket):
         user_id = await authenticate_websocket(websocket)
 
         await websocket.accept()
-        connect_data = await websocket.receive_json()
+
+        await websocket_manager.connect(user_id=user_id, websocket=websocket)
+        #connect_data = await websocket.receive_json()
 
         #only for chat
-        room_id = connect_data.get("room_id")
+        #room_id = connect_data.get("room_id")
 
-        mode = connect_data["mode"]
+        '''mode = connect_data["mode"]
 
         if not mode:
             await websocket.close(code=4000)
-            return
-
-        if mode == "world":
-            world = connect_data.get("world")
-            character_id = connect_data.get("character")
-
-            if world not in worlds:
-                await get_world(world)
-
-            await websocket_manager.connect(user_id, websocket=websocket, mode=mode, world=world, character_id=character_id)
-            room_id = websocket_manager.get_room_id(websocket)
-            await world_management.add_room_connection(websocket, world, room_id, user_id, character_id)
-
-            await world_response.serve_conversation(websocket, world, room_id)
-
-        if mode == "chat":
-            await websocket_manager.connect(user_id, websocket=websocket, mode=mode, room_id=room_id)
-            #chat_management.add_room_connection(websocket, room_id)
-            #await chat_response.serve_conversation(websocket)
-
+            return'''
+            
+        '''
         if mode == "simulation":
             world = connect_data.get("world")
             character_id = connect_data.get("character")
             await websocket_manager.connect(user_id, websocket=websocket, mode=mode, world=world, character_id=character_id)
             room_id = websocket_manager.get_room_id(websocket)
             world_management.add_room_connection(websocket, world, room_id, user_id, character_id)
-            await world_response.serve_conversation(websocket, world, room_id)
-
-
-        """if room_id not in rooms:
-            if mode == "world":
-                rooms[room_id] = {"world": world}
-            elif mode == "chat":
-                rooms[room_id] = {"chat": room_id}"""
+            await world_response.serve_conversation(websocket, world, room_id)'''
 
         while True:
             data = await websocket.receive_json()

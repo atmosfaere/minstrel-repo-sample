@@ -1,4 +1,4 @@
-import { navigatePage, baseUrl, world, chat, nonce, socket, setSocket } from '../app.js';
+import { navigatePage, baseUrl, world, chat, nonce } from '../app.js';
 import { openWorldIndex, closeWorldIndex, navigateBackIndex, openPage } from '../world-index.js';
 import { openCharacterPage } from '../world-index/page-renderers/character-page.js';
 import { getWorldName } from '../world-page.js';
@@ -37,7 +37,7 @@ import {
     changeSimulationType,
     onSimulationFrequencyChanged,
 } from '../adventure/simulation-menu.js';
-import { addSocketMessageListener } from '../socket/socket.js';
+import { addSocketMessageListener, addSocketResetListener, makeSocket, socket } from '../socket/socket.js';
 
 let isStreaming = false;
 const STREAM_TIMEOUT = 15000;
@@ -82,7 +82,7 @@ let characterMenu = null;
 
 let wasBackgrounded = false;
 
-//avoid circular imports
+//expose functions to window object toavoid circular imports
 window.chatModule = {
     set mode(value) { mode = value; },
     get mode() { return mode; },
@@ -124,11 +124,12 @@ export function load(page) {
     //chat = sessionStorage.getItem("chat")
     bindEvents();
     if (page === "world") {
-        mode = 'world';
+        mode = 'adventure';
     } else if (page === "chat") {
         mode = 'chat';
     }
     setupSocket();
+    initializeSocketMode();
 }
 
 function bindEvents() {
@@ -270,8 +271,16 @@ function bindEvents() {
 }
 
 export async function setupSocket() {
+    addSocketResetListener(onSocketReset);
+
     await makeSocket();
 
+    addSocketMessageListener(processSocketMessage);
+
+    isLoadingEarlierMessages = false;
+}
+
+function initializeSocketMode() {
     if (socket && socket.readyState === WebSocket.OPEN) {
         //wasBackgrounded = false; // Reset background flag on successful connection
 
@@ -285,30 +294,32 @@ export async function setupSocket() {
         //let the server websocket manager associate the websocket instance with a room and mode
         let room_id = null;
 
-        let socketCharacterId = characterId;
+        let socketCharacterId = null;
 
-        if (mode === 'world') {
-            //room_id = world
+        if (mode === 'adventure') {
+            socketCharacterId = characterId;
         } else if (mode === 'chat') {
             room_id = chat
         } else if (mode === 'simulation') {
             socketCharacterId = simulationCharacterId;
         }
         console.log("socketCharacterId, making socket", socketCharacterId);
-        socket.send(JSON.stringify({ room_id, mode, world, "character": socketCharacterId }));
+        //socket.send(JSON.stringify({ room_id, mode, world, "character": socketCharacterId }));
+        if (mode === "adventure" || mode === "simulation") {
+            socket.send(JSON.stringify({ 'route': 'adventure connect', 'content': { room_id, mode, world, "character": socketCharacterId } }));
+        }
+
 
         // Start heartbeat for activity tracking (only in world mode)
-        if (mode === 'world') {
+        if (mode === 'adventure') {
             //startHeartbeat(socket);
         }
     }
-
-    addSocketMessageListener(processSocketMessage);
-
-    isLoadingEarlierMessages = false;
 }
 
-
+function onSocketReset() {
+    initializeSocketMode();
+}
 
 
 //let mode = chat !== null ? 'chat' : (world !== null ? 'world' : null);

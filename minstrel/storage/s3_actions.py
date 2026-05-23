@@ -26,13 +26,6 @@ s3['minstrel-data'] = {}
 s3['minstrel-data']['worlds'] = {}
 '''
 
-# Lock dictionary to prevent concurrent replace operations on the same path
-_replace_locks = defaultdict(asyncio.Lock)
-
-def get_user_lock(bucket: str, prefix: str) -> asyncio.Lock:
-    """Return a per-path asyncio lock, shared across all callers in this process."""
-    return _replace_locks[f"{bucket}/{prefix}"]
-
 #s3_client = boto3.client('s3')
 
 #BASE_DIR = r'C:\Users\jakvo\OneDrive\Documents\Minstrel Dev'
@@ -40,6 +33,14 @@ def get_user_lock(bucket: str, prefix: str) -> asyncio.Lock:
 BASE_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__)))), 'minstrel_data')
 
 logger = logging.getLogger(__name__)
+
+# Lock dictionary to prevent concurrent replace operations on the same path
+_replace_locks = defaultdict(asyncio.Lock)
+
+def get_user_lock(bucket: str, prefix: str) -> asyncio.Lock:
+    """Return a per-path asyncio lock, shared across all callers in this process."""
+    return _replace_locks[f"{bucket}/{prefix}"]
+
 
 async def ensure_dir(path: str):
     """Ensure that the directory exists."""

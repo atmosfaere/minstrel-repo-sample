@@ -79,7 +79,7 @@ function createSimulationUI() {
 }
 
 function exitSimulationMode() {
-	window.chatModule.mode = 'world'; // Or whatever the default is
+	window.chatModule.mode = 'adventure';
 	chatContainer.innerHTML = '';
 	// Hide simulation UI, show chat controls and message area
 	simulationContainer.style.display = 'none';

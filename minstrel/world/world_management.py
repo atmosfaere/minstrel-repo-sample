@@ -667,9 +667,12 @@ async def set_character_simulation_on(request: Request, user_id=Depends(authenti
     if not (interval == 'Continuous' or isinstance(interval, (int, float))):
         raise HTTPException(status_code=400, detail="Invalid interval format. Must be a number (minutes) or 'Continuous'.")
 
+    current_sim_owner = worlds[world].simulated_characters.get(character_id, {}).get('user_id', None)
+    if current_sim_owner and current_sim_owner != user_id:
+        raise HTTPException(status_code=403, detail="Character simulated by another player. User does not have permission to change character simulation settings.")
+
     character_name = worlds[world]['characters'][character_id].get('name')
 
-    #if user has permission to change character simulation setting
     worlds[world].simulated_characters.setdefault(character_id, {})
     worlds[world].simulated_characters[character_id]['name'] = character_name
     worlds[world].simulated_characters[character_id]['sim_type'] = sim_type
@@ -685,6 +688,7 @@ async def set_character_simulation_on(request: Request, user_id=Depends(authenti
         worlds[world].rooms[room_id].characters.append(character_id)
         
     worlds[world]['simulated_characters'][character_id]['room_id'] = room_id
+    worlds[world].characters[character_id]['room_id'] = room_id
 
     try:
         await schedule_simulation(world, character_id)

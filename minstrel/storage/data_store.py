@@ -18,6 +18,8 @@ registered_users = []
 event_queue = []
 backup_queue = []
 
+notes = {}
+
 
 #simulated_characters/id/world
 #simulated_characters/id/conversation_history
