@@ -128,7 +128,9 @@ export function load(page) {
     } else if (page === "chat") {
         mode = 'chat';
     }
+
     setupSocket();
+
     initializeSocketMode();
 }
 
@@ -306,7 +308,9 @@ function initializeSocketMode() {
         console.log("socketCharacterId, making socket", socketCharacterId);
         //socket.send(JSON.stringify({ room_id, mode, world, "character": socketCharacterId }));
         if (mode === "adventure" || mode === "simulation") {
-            socket.send(JSON.stringify({ 'route': 'adventure connect', 'content': { room_id, mode, world, "character": socketCharacterId } }));
+            socket.send(JSON.stringify({ 'channel': 'adventure', 'route': 'adventure connect', 'content': { room_id, mode, world, "character": socketCharacterId } }));
+        } else if (mode === "chat") {
+            socket.send(JSON.stringify({ 'channel': 'chat', 'route': 'chat connect', 'content': { room_id, mode } }));
         }
 
 
@@ -330,7 +334,7 @@ function retrieveEarlierMessages() {
     //socket.send('retrieve_earlier_messages', { index: messageStartIndex });
     console.log("retrieve earlier scroll request", messageStartIndex);
     isLoadingEarlierMessages = true;
-    socket.send(JSON.stringify({ 'route': 'retrieve earlier messages', 'content': { index: messageStartIndex } }));
+    socket.send(JSON.stringify({ 'channel': mode, 'route': 'retrieve earlier messages', 'content': { index: messageStartIndex } }));
     // if send fails
     // isLoadingEarlierMessages = false;
     // 
@@ -356,7 +360,7 @@ function sendMessage() {
     console.log("sending userMessage");
     console.log("mode ", mode);
     console.log(userMessage);
-    socket.send(JSON.stringify({ 'route': 'message', 'content': { 'message': userMessage } }));
+    socket.send(JSON.stringify({ 'channel': mode, 'route': 'message', 'content': { 'message': userMessage } }));
 }
 
 /*

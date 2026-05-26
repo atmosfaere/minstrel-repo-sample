@@ -477,12 +477,14 @@ async function getPlayerMenuData(clickedCharacterId, clickedUserId) {
         try {
             window.playerMenuDataResolver.waitingFor.push('party');
             socket.send(JSON.stringify({
+                'channel': 'adventure',
                 'route': 'get party id',
                 'content': {}
             }));
 
             window.playerMenuDataResolver.waitingFor.push('friend');
             socket.send(JSON.stringify({
+                'channel': 'adventure',
                 'route': 'check friend',
                 'content': { 'user_id': clickedUserId }
             }));
@@ -560,6 +562,7 @@ export function leaveParty() {
         if (confirmed) {
             console.log('Leaving party:', currentUserPartyId);
             socket.send(JSON.stringify({
+                'channel': 'adventure',
                 'route': 'leave party',
                 'content': {}
             }));
@@ -572,6 +575,7 @@ export function leaveParty() {
         if (confirmed) {
             console.log('Joining party:', clickedCharacterPartyId);
             socket.send(JSON.stringify({
+                'channel': 'adventure',
                 'route': 'join party',
                 'content': { 'party_id': clickedCharacterPartyId }
             }));
