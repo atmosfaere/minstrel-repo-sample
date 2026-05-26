@@ -2,6 +2,7 @@ import time
 import secrets
 import random
 import re
+import uuid as uuid_module
 
 def get_time_bytes(include_time):
     if include_time:
@@ -52,6 +53,9 @@ def create_user_id():
     random_bits = secrets.token_bytes(8)
     user_id = time_portion + random_bits
     return user_id.hex()
+
+def uuid():
+    return str(uuid_module.uuid4())
 
 def hyphenate_id(hex_id):
     if len(hex_id) != 64:
