@@ -278,8 +278,12 @@ async def get_streamed_response(message, background=True):
         await response.release()
     return ai_response
 
-
-
+'''
+def ISOString_to_datetime(iso_string):
+    """Parse an ISO 8601 UTC string (as sent by JS Date.toISOString()) into a
+    timezone-aware datetime for safe comparison."""
+    return datetime.fromisoformat(iso_string.replace('Z', '+00:00'))
+'''
 
 async def get_response_value(prompt, key, caller, process_list=False, max_tokens=None):
     request_start_time = datetime.now()
