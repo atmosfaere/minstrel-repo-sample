@@ -640,7 +640,7 @@ function createLeftContainer(message, username, userId, characterName, character
     // Attach menu event listener to character name
     const characterNameButton = newFlexContainer.querySelector(".user-name");
 
-    if (mode === "world") {
+    if (mode === "adventure") {
         characterNameButton.dataset.characterId = characterId;
         characterNameButton.dataset.userId = userId;
         if (partyId) {
@@ -969,7 +969,7 @@ function startProcessingAnimation() {
 //examine rename flex-container
 function addConversation(content) {
     console.log('received recent conversation')
-    const textContainers = document.querySelectorAll('.flex-container');
+    const textContainers = document.querySelectorAll('.response-container');
 
     textContainers.forEach(container => {
         container.parentNode.removeChild(container);
@@ -1085,7 +1085,7 @@ function autoResizeInputField() {
 }
 
 export function navigateBack() {
-    if (mode === "world") {
+    if (mode === "adventure") {
         navigateBackIndex();
     } else if (mode === "chat") {
         navigatePage('chat-select');

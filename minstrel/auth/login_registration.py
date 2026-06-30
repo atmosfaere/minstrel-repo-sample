@@ -230,28 +230,6 @@ async def logout(response: Response):
 '''malware could potentially hijack another users request.sid'''
 '''if fail verify when clicking on part of site that makes request, set user_sessions['request.sid'] = None'''
 
-#@app.post("/verify/")
-#not meant to be publicly acessible, block in waf
-@router.post("/verify")
-async def verify(request: Request, response: Response):
-    try:
-        user_id = await authentication.verify_user(request, response)
-        if user_id:
-            #response should be returned in sign_in, used for both sign in and external server, can't send user_id to client
-            return JSONResponse(status_code=status.HTTP_200_OK,
-                                content={"user_id": user_id})
-        else:
-            await logout(response)
-            #not currently using body content message
-            return JSONResponse(status_code=status.HTTP_401_UNAUTHORIZED,
-                                content={"message": "Verification failed"}
-                                )
-    except Exception as e:
-        logging.error(f"Unexpected error during verification: {e}", exc_info=True)
-        raise HTTPException(
-            status_code=500,
-            detail="An unexpected error occurred"
-        ) from e
 # edit cookies
 
 #@app.get("/invite/")

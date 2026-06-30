@@ -78,7 +78,7 @@ export async function makeSocket() {
     socket.addEventListener('message', function (event) {
         try {
             const data = JSON.parse(event.data);
-            messageListeners.forEach(listener => listener(data));
+            socketMessageListeners.forEach(listener => listener(data));
         } catch (error) {
             console.error("Error parsing message data:", error);
         }

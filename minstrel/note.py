@@ -50,9 +50,10 @@ async def edit_text_note(websocket, user_id, edit):
             await notify_edit_failed(websocket, note_id)
             return
 
-    if len(notes[note_id]['connections']) > 1:
-        for socket in notes[note_id]['connections'].keys():
-            await wsm.send(websocket=websocket, message={'channel': 'notes', 'route': 'receive text note edit', 'content': {'note_id': note_id, 'edit': edit}}
+    for socket in notes[note_id]['connections'].keys():
+            text = notes[note_id]['text']
+            await wsm.send(websocket=socket, message={'channel': 'notes', 'route': 'receive text note edit', 'content': {'note_id': note_id, 'text': text}})
+        
 
 
 def apply_text_edit(note_id, edit):

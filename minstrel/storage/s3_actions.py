@@ -28,9 +28,11 @@ s3['minstrel-data']['worlds'] = {}
 
 #s3_client = boto3.client('s3')
 
-#BASE_DIR = r'C:\Users\jakvo\OneDrive\Documents\Minstrel Dev'
-# Set BASE_DIR to be at the same level as the project folder
-BASE_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__)))), 'minstrel_data')
+# On EC2: minstrel/storage/s3_actions.py → 3 levels up = parent of minstrel folder ✓
+# Locally: minstrel-repo/minstrel/storage/s3_actions.py → 3 levels up = minstrel-repo (inside repo) ✗
+# Override with MINSTREL_DATA_DIR env var for local dev (set in .env).
+_default_data_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'minstrel_data')
+BASE_DIR = os.getenv('MINSTREL_DATA_DIR', _default_data_dir)
 
 logger = logging.getLogger(__name__)
 

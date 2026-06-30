@@ -17,16 +17,12 @@ BUCKET = "minstrel-accounts"
 
 #using separate keys prevents an attacker or negligent developer from sending one type of token in place of another type of token, token won't be validated
 #probably need to implement ability to rotate keys check past keys as well as present
-secret_key = "c5b6005d228181f03bd587adb70f0cd31a39497163afe0f0a877966f467f73cd"
-refresh_secret_key = "0392af64ea1e446f67a321f407f9746e098aad530a81b0bfde7df381f7ed52c5"
-remember_me_key = "c02621eb2cd9ca6063baa0a59e3dbf7e5a551710119489a80ee06257990fc013"
-forgot_password_key = "7610f7ac22ac43a5ed698a60c4303db48566e9ae0a40f34793073c3c18332f84"
+secret_key = os.getenv("ACCESS_TOKEN_SECRET_KEY")
+refresh_secret_key = os.getenv("REFRESH_SECRET_KEY")
+remember_me_key = os.getenv("REMEMBER_ME_KEY")
+forgot_password_key = os.getenv("FORGOT_PASSWORD_KEY")
 invite_key = "a3f1d2e4b5c6789012345678901234567890abcdef1234567890abcdef123456"
-#secret_key = os.getenv("SECRET_KEY")
-#refresh_secret_key  = os.getenv("REFRESH_SECRET_KEY")
-#remember_me_key = os.getenv("REMEMBER_ME_KEY")
-#forgot_password_key = os.getenv("FORGOT_PASSWORD_KEY")
-#invite_key = os.getenv("INVITE_KEY")
+
 ALGORITHM = "HS256"
 
 def get_cookie_domain(request) -> str | None:

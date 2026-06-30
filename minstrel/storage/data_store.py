@@ -89,7 +89,7 @@ models = {"deepinfra": ["meta-llama/Llama-3.3-70B-Instruct", "meta-llama/Llama-3
 default_provider = 'openrouter'
 default_url = api_urls[default_provider]
 default_key = api_keys[default_provider]
-default_model = "anthropic/claude-3.7-sonnet"
+default_model = "anthropic/claude-4.6-sonnet"
 '''
 default_provider = 'openrouter'
 default_url = api_urls[default_provider]

@@ -1,6 +1,6 @@
 from fastapi import WebSocket, WebSocketDisconnect
 from .websocket_manager import websocket_manager as wsm
-from note import edit_text_note, fetch_note
+from note import edit_text_note, fetch_note_client
 
 async def route_note_message(websocket: WebSocket, data):
     content = data["content"]
@@ -12,7 +12,7 @@ async def route_note_message(websocket: WebSocket, data):
             edit_text_note(websocket, user_id, content)
 
     if data['route'] == 'fetch note':
-        fetch_note(websocket, user_id, content)
+        fetch_note_client(websocket, user_id, content)
 
     if data['route'] == 'sync notes':
         pass

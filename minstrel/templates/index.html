@@ -44,7 +44,7 @@
     <link rel="stylesheet" href="{{ url_for('static', path='/css/sign-in-styles.css') }}?v={{ timestamp }}">
     
     <!-- Import Map -->
-    <script type="importmap">
+    <script type="importmap" nonce="{{ nonce }}">
         {
             "imports": {
                 "@socket": "/static/js/socket/socket.js"

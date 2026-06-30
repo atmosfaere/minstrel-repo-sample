@@ -43,7 +43,7 @@ class WebSocketManager:
 
             if websocket in self.active_connections:
                 if "adventure" in self.active_connections[websocket]['active_modules']:
-                    world_utils.handle_websocket_disconnect(websocket, self.get_world_id(websocket, "adventure"), self.get_room_id(websocket), self.get_user_id(websocket))
+                    world_utils.handle_websocket_disconnect(websocket, self.get_world_id(websocket), self.get_room_id(websocket, "adventure"), self.get_user_id(websocket))
                 if "chat" in self.active_connections[websocket]['active_modules']:
                     chat_management.remove_connection(websocket, self.get_room_id(websocket, "chat"), self.get_user_id(websocket))
                 del self.active_connections[websocket]

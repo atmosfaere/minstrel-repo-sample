@@ -59,7 +59,7 @@ async def route_message(websocket: WebSocket, data):
             character_id = content.get("character")
 
             if world_id not in worlds:
-                logging.info(f"World {world} not found in memory when connecting to adventure. Getting world...")
+                logging.info(f"World {world_id} not found in memory when connecting to adventure. Getting world...")
                 await world_management.get_world(world_id)
 
             wsm.initialize_adventure_module(websocket, user_id, world_id, character_id)

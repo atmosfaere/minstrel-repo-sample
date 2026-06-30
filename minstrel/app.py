@@ -1,4 +1,6 @@
 import sys, os
+from dotenv import load_dotenv
+load_dotenv()
 import logging
 import time
 from logging.handlers import RotatingFileHandler
@@ -37,8 +39,8 @@ from storage import s3_actions
 from networking.websocket_routes import route_message
 from networking.websocket_manager import websocket_manager
 #from adventure_endpoints import adventure_router
-from aiohttp import ClientResponseError
 import traceback
+from auth.authentication import verify_user
 
 from networking.http_client import http_client
 from auth.auth_client import authenticate
@@ -105,7 +107,7 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
         #response.headers['Content-Security-Policy'] = "default-src 'self';"
         response.headers['Content-Security-Policy'] = (
             "default-src 'self'; "
-            "script-src 'self' https://accounts.google.com https://appleid.cdn-apple.com; "
+            f"script-src 'self' 'nonce-{nonce}' https://accounts.google.com https://appleid.cdn-apple.com; "
             f"style-src 'self' 'nonce-{nonce}' https://accounts.google.com 'sha256-f4HQaD+NpkjxARuDdQGRxOo2ppAliUcSVMnYbNcYEJ0='; "
             "frame-src 'self' https://accounts.google.com https://appleid.apple.com; "
             "connect-src 'self' https://accounts.google.com https://appleid.cdn-apple.com; "
@@ -256,32 +258,13 @@ def invite_page(request: Request):
 
 
 async def authenticate_websocket(websocket: WebSocket):
-    #'''
-    cookie_header = "; ".join([f"{key}={value}" for key, value in websocket.cookies.items()])
-    headers = {"Cookie": cookie_header}
-    try:
-        # Get the base URL from environment variable or build from websocket
-        if 'AUTH_SERVER_URL' in os.environ:
-            verify_url = os.getenv('AUTH_SERVER_URL') + '/verify'
-        else:
-            # Build URL from the websocket connection
-            scheme = 'https' if websocket.url.scheme == 'wss' else 'http'
-            host = websocket.headers.get('host', websocket.url.hostname)
-            #if websocket.url.port and websocket.url.port not in [80, 443]:
-                #host = f"{host}:{websocket.url.port}"
-            verify_url = f"{scheme}://{host}/verify"
-        
-        auth_data = await http_client.post(verify_url, headers=headers)
-        user_id = auth_data.get('user_id')
-
-        if user_id is None:
-            raise HTTPException(status_code=403, detail="Websocket authentication failed: No user_id in auth_response")
-        return user_id
-    except ClientResponseError as e:
-        logging.info("Websocket authentication failed")
-        raise HTTPException(status_code=e.status, detail="Websocket authentication failed")
-#'''
-    #user_id = "jake"
+    # WebSocket has no response channel for Set-Cookie; sink absorbs any
+    # rotated token cookies. Token rotation silently fails here, same as
+    # the previous HTTP-call path which also discarded Set-Cookie headers.
+    sink = Response()
+    user_id = await verify_user(websocket, sink)
+    if not user_id:
+        raise HTTPException(status_code=403, detail="Websocket authentication failed")
     return user_id
 
 @app.websocket("/ws")

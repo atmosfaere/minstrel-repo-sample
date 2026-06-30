@@ -21,10 +21,12 @@ echo Installing Python requirements...
 ssh -i "C:\Users\jakvo\Downloads\test.pem" ec2-user@ec2-44-252-116-69.us-west-2.compute.amazonaws.com ^
     "cd minstrel && pip3 install -r requirements.txt"
 
-REM --- Start Elasticsearch using deploy script (DISABLED - uncomment when ready) ---
-REM echo Starting Elasticsearch...
-REM ssh -i "C:\Users\jakvo\Downloads\test.pem" ec2-user@ec2-44-252-116-69.us-west-2.compute.amazonaws.com ^
-REM     "cd minstrel && chmod +x deploy.sh && ./deploy.sh"
+REM --- Write production .env on the server ---
+REM Update ES_PRIVATE_IP below when your ES server changes
+SET ES_PRIVATE_IP=172.31.56.241
+echo Setting production ELASTICSEARCH_URL...
+ssh -i "C:\Users\jakvo\Downloads\test.pem" ec2-user@ec2-44-252-116-69.us-west-2.compute.amazonaws.com ^
+    "if grep -q '^ELASTICSEARCH_URL=' /home/ec2-user/minstrel/.env 2>/dev/null; then sed -i 's|^ELASTICSEARCH_URL=.*|ELASTICSEARCH_URL=http://%ES_PRIVATE_IP%:9200|' /home/ec2-user/minstrel/.env; else echo 'ELASTICSEARCH_URL=http://%ES_PRIVATE_IP%:9200' >> /home/ec2-user/minstrel/.env; fi"
 
 REM --- Ensure certbot auto-renewal is enabled ---
 echo.
