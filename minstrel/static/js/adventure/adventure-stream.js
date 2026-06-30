@@ -18,6 +18,8 @@ let activeStreamScrollFrame = null;
 let pendingHeightTransitionFrame = null;
 let heightTransitionVersion = 0;
 let scrollAnimationVersion = 0;
+let userCancelledStreamAutoScroll = false;
+let boundStreamScrollContainer = null;
 
 export function processAdventureStream(chunk, context) {
     const {
@@ -38,6 +40,7 @@ export function processAdventureStream(chunk, context) {
         clearStreamHeightStyles(responseStreamElement);
         originalMessageStreamElement = document.createElement('p');
         resetStreamRenderState();
+        bindStreamManualScrollCancel(context.messageScrollContainer);
     }
 
     if (chunk === "END_OF_STREAM") {
@@ -96,6 +99,7 @@ function resetStreamRenderState() {
     pendingHeightTransitionFrame = null;
     heightTransitionVersion++;
     scrollAnimationVersion++;
+    userCancelledStreamAutoScroll = false;
     visibleStreamBuffer = "";
     lastRenderedStreamHTML = "";
     streamLineTargetLength = null;
@@ -320,6 +324,10 @@ function hideUnprocessedStreamMarkers(message) {
 }
 
 function scrollStreamToBottomIfVisible(context) {
+    if (userCancelledStreamAutoScroll) {
+        return;
+    }
+
     if (pendingStreamScrollFrame) {
         return;
     }
@@ -329,14 +337,18 @@ function scrollStreamToBottomIfVisible(context) {
 
         const { responseStreamElement, messageScrollContainer, isScrollingMessages } = context;
 
-        if (!responseStreamElement || isScrollingMessages()) {
+        if (!responseStreamElement || userCancelledStreamAutoScroll || isScrollingMessages()) {
+            cancelStreamScrollAnimation();
             return;
         }
 
         const targetScrollTop = getStreamScrollTarget(responseStreamElement, messageScrollContainer);
-        if (targetScrollTop > messageScrollContainer.scrollTop) {
-            animateStreamScroll(messageScrollContainer, targetScrollTop);
+        if (targetScrollTop <= messageScrollContainer.scrollTop + 1) {
+            cancelStreamScrollAnimation();
+            return;
         }
+
+        animateStreamScroll(messageScrollContainer, targetScrollTop);
     });
 }
 
@@ -345,7 +357,7 @@ function getStreamScrollTarget(responseStreamElement, messageScrollContainer) {
     const containerRect = messageScrollContainer.getBoundingClientRect();
     const distanceUntilStreamTopPins = Math.max(0, rect.top - containerRect.top);
 
-    if (distanceUntilStreamTopPins === 0) {
+    if (distanceUntilStreamTopPins <= 1) {
         return messageScrollContainer.scrollTop;
     }
 
@@ -385,4 +397,28 @@ function animateStreamScroll(messageScrollContainer, targetScrollTop) {
     }
 
     activeStreamScrollFrame = requestAnimationFrame(step);
+}
+
+function cancelStreamScrollAnimation() {
+    if (activeStreamScrollFrame) {
+        cancelAnimationFrame(activeStreamScrollFrame);
+        activeStreamScrollFrame = null;
+    }
+    scrollAnimationVersion++;
+}
+
+function bindStreamManualScrollCancel(messageScrollContainer) {
+    if (!messageScrollContainer || boundStreamScrollContainer === messageScrollContainer) {
+        return;
+    }
+
+    boundStreamScrollContainer = messageScrollContainer;
+    messageScrollContainer.addEventListener('wheel', cancelStreamAutoScrollForResponse, { passive: true });
+    messageScrollContainer.addEventListener('touchstart', cancelStreamAutoScrollForResponse, { passive: true });
+    messageScrollContainer.addEventListener('pointerdown', cancelStreamAutoScrollForResponse);
+}
+
+function cancelStreamAutoScrollForResponse() {
+    userCancelledStreamAutoScroll = true;
+    cancelStreamScrollAnimation();
 }
