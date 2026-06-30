@@ -376,6 +376,7 @@ function streamResponse(chunk) {
     let openingAtSymbolInChunk = false;
     let openingAtDelimiterInChunk = false;
     let closingAtSymbolInChunk = false;
+    //console.log("chunk: ", chunk);
 
     // Stop and clear "processing..." animation on first stream message
     if (!hasReceivedFirstStreamMessage) {
