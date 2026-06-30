@@ -596,7 +596,7 @@ export function setChat(value) {
 
 function loginSuccess() {
     sessionStorage.setItem('isAuthenticated', 'true');
-    navigatePage('home');
+    navigatePage('');
 }
 
 function logout() {

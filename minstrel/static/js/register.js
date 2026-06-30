@@ -19,7 +19,7 @@ export async function load() {
     try {
         const isAuthenticated = await checkAuthentication();
         if (isAuthenticated) {
-            navigatePage(window.location.pathname.substring(1) || 'home');
+            navigatePage('');
         }
 
         // If not authenticated, check invite status
@@ -68,7 +68,7 @@ function bindEvents() {
                 if (checkPassword(input.value)) {
                     password = input.value;
                     if (await createAccount()) {
-                        navigatePage('home');
+                        navigatePage('');
                     }
                 }
                 break;
@@ -436,8 +436,6 @@ async function createAccount(entered_code) {
         statusMessage.style.visibility = "visible";
         return false;
     }
-    window.location.href = '/home';
-
 }
 
 function navigateToSignIn() {
@@ -520,7 +518,7 @@ async function handleOAuthToken(provider, payload) {
         statusMessage.style.visibility = 'hidden';
 
         if (data.status === 'ok') {
-            navigatePage('home');
+            navigatePage('');
         } else if (data.status === 'new_user') {
             oauthProvider = provider;
             thirdParty = true;
@@ -550,7 +548,7 @@ async function completeOAuthRegistration(chosenUsername) {
         });
         const data = await response.json();
         if (response.ok && data.status === 'ok') {
-            navigatePage('home');
+            navigatePage('');
         } else {
             statusMessage.textContent = data.detail || 'Account creation failed. Please try again.';
             statusMessage.style.visibility = 'visible';
@@ -620,7 +618,7 @@ async function submitLinkProvider(emailOrUsername, linkPassword) {
         });
         const data = await response.json();
         if (response.ok && data.status === 'ok') {
-            navigatePage('home');
+            navigatePage('');
         } else {
             statusMessage.textContent = data.detail || 'Linking failed. Check your credentials and try again.';
             statusMessage.style.visibility = 'visible';
