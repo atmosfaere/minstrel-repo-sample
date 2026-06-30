@@ -45,6 +45,19 @@ export async function makeSocket() {
 
     isConnecting = true;
 
+    try {
+        const authResponse = await fetch('/api/auth-check');
+        if (!authResponse.ok) {
+            console.warn("WebSocket: authentication check failed before connect");
+            isConnecting = false;
+            return;
+        }
+    } catch (error) {
+        console.error("WebSocket: authentication check errored before connect:", error);
+        isConnecting = false;
+        return;
+    }
+
     if (socket) {
         try {
             socket.close();

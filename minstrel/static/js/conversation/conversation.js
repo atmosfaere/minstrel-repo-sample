@@ -8,7 +8,6 @@ import { initializeSimulationView } from '../simulation-view.js';
 import { startHeartbeat, stopHeartbeat } from '../conversation-utility.js';
 import { sanitizeHTML } from '../utility.js';
 import {
-    createWorldFeatureSpan,
     processMessageText,
     setupWorldLoadingOverlay,
     setupWorldIndexImageLoading,
@@ -37,6 +36,7 @@ import {
     changeSimulationType,
     onSimulationFrequencyChanged,
 } from '../adventure/simulation-menu.js';
+import { processAdventureStream } from '../adventure/adventure-stream.js';
 import { addSocketMessageListener, addSocketResetListener, makeSocket, socket } from '../socket/socket.js';
 
 let isStreaming = false;
@@ -56,23 +56,9 @@ let messageScrollContainer;
 let promptArea;
 let sendButton;
 
-let originalMessageStreamElement = null;
 let responseStreamElement;
 let processStreamElement = null;
-let receivingDelimitedId = false;
-let previousStreamWord = null;
-let delimitedId = null;
 let currentTextNode = null;
-
-let streamingFeatureName = ""
-let streamingFeatureId = ""
-
-let streamReceivedOpeningBracket = false;
-let streamReceivedClosingBracket = false;
-let streamReceivedOpeningAtSymbol = false;
-let streamReceivedOpeningAtDelimiter = false;
-let streamReceivedClosingAtSymbol = false;
-let streamReceivedClosingAtDelimiter = false;
 
 // "Processing..." notification
 let processingStep = 0;
@@ -370,250 +356,45 @@ async function getWorldChat() {
 
 function streamResponse(chunk) {
     clearTimeout(timeout); // Clear the previous timeout
-    chunk = sanitizeHTML(chunk);
 
-    let closingBracketInChunk = false;
-    let openingAtSymbolInChunk = false;
-    let openingAtDelimiterInChunk = false;
-    let closingAtSymbolInChunk = false;
-    //console.log("chunk: ", chunk);
-
-    // Stop and clear "processing..." animation on first stream message
-    if (!hasReceivedFirstStreamMessage) {
-        hasReceivedFirstStreamMessage = true;
-        responseStreamElement.innerHTML = "";
-
-        // Recreate and reattach currentTextNode since innerHTML cleared it
-        currentTextNode = document.createTextNode("");
-        responseStreamElement.appendChild(currentTextNode);
-
-        originalMessageStreamElement = document.createElement('p');
-    }
-
-    if (chunk.includes('[')) {
-        console.log("received opening bracket");
-        streamReceivedOpeningBracket = true;
-    }
-
-    // Only check for closing bracket if opening bracket was found
-    if (streamReceivedOpeningBracket && chunk.includes(']') && !streamReceivedClosingAtDelimiter) {
-        console.log("chunk has closing bracket");
-        streamReceivedOpeningBracket = false;
-        streamReceivedClosingBracket = true;
-        closingBracketInChunk = true;
-
-        // Extract the feature name from between brackets
-        const content = processStreamElement.textContent;
-        const bracketMatch = content.match(/\[([^\]]+)\]/);
-        if (bracketMatch) {
-            streamingFeatureName = bracketMatch[1];
-        }
-    }
-
-    if (!closingBracketInChunk && streamReceivedClosingBracket && chunk !== " " && ((!chunk === " " && !chunk.includes('@')) && (!chunk.includes('[') && !chunk.includes('@')))) {
-        // Not an id, replace original text
-        console.log("not an id, replacing original text, chunk: ", chunk);
-        currentTextNode.textContent = responseStreamElement.textContent;
-        currentTextNode.textContent += chunk;
-        processStreamElement.textContent += chunk;
-        originalMessageStreamElement.textContent += chunk;
+    if (mode === "adventure") {
+        processAdventureStream(chunk, getStreamContext());
         return;
     }
 
-    if (streamReceivedClosingBracket && chunk.includes('@')) {
-        console.log("received opening @ symbol");
-        streamReceivedClosingBracket = false;
-        streamReceivedOpeningAtSymbol = true;
-        openingAtSymbolInChunk = true;
-        if (chunk.includes('@@')) {
-            console.log("received opening @@ delimiter");
-            streamReceivedOpeningAtSymbol = false;
-            streamReceivedOpeningAtDelimiter = true;
-            receivingDelimitedId = true;
-            openingAtDelimiterInChunk = true;
-        }
-
-
-    }
-
-    // Check for @@ pattern (opening at symbol + delimiter)
-    if (!openingAtSymbolInChunk && streamReceivedOpeningAtSymbol && !streamReceivedClosingAtSymbol) {
-        if (chunk.includes('@')) {
-            console.log("received opening @@ delimiter");
-            streamReceivedOpeningAtSymbol = false;
-            streamReceivedOpeningAtDelimiter = true;
-            openingAtDelimiterInChunk = true;
-            receivingDelimitedId = true;
-        }
-    }
-
-    if (receivingDelimitedId) {
-        streamingFeatureId += chunk;
-    }
-
-    if (!openingAtSymbolInChunk && !openingAtDelimiterInChunk && streamReceivedOpeningAtDelimiter && chunk.includes('@')) {
-        streamReceivedOpeningAtDelimiter = false;
-        streamReceivedClosingAtSymbol = true;
-        closingAtSymbolInChunk = true;
-        console.log("received closing @ symbol");
-
-        if (chunk.includes('@@')) {
-            streamReceivedClosingAtSymbol = false;
-            streamReceivedClosingAtDelimiter = true;
-            console.log("received closing @@ delimiter");
-        }
-    }
-
-    if (!closingAtSymbolInChunk && streamReceivedClosingAtSymbol && chunk.includes('@')) {
-        streamReceivedClosingAtSymbol = false;
-        streamReceivedClosingAtDelimiter = true;
-        console.log("received closing @@ delimiter");
-    }
-
-    if (streamReceivedClosingAtDelimiter) {
-        console.log("processing id");
-        processStreamElement.textContent += chunk;
-        const content = processStreamElement.textContent;
-        const idMatch = content.match(/@@([^@]+)@@/);
-        if (idMatch) {
-            console.log("matched id");
-            const id = idMatch[1];
-            //currentTextNode.textContent += id;
-            addObjectIdMenuSpan(delimitedId);
-            delimitedId = '';
-
-            currentTextNode = document.createTextNode("");
-            responseStreamElement.appendChild(currentTextNode);
-        }
-        else {
-            console.log("didn't match id");
-            //couldn't extract id, replace original text
-            currentTextNode.textContent = processStreamElement.textContent;
-            currentTextNode.textContent += chunk;
-            processStreamElement.textContent += chunk;
-        }
-
-        receivingDelimitedId = false;
-        streamReceivedClosingAtDelimiter = false;
-        originalMessageStreamElement.textContent += chunk;
+    if (mode === "simulation") {
+        processSimulationStream(chunk);
         return;
     }
 
-    if (chunk === "END_OF_STREAM") {
-        isStreaming = false;
-
-        console.log("received: end of stream")
-
-        // Force a reflow to ensure the DOM is updated
-        void responseStreamElement.offsetHeight;
-        // Force a repaint
-        requestAnimationFrame(() => { });
-
-        queueAnnouncement(processStreamElement.textContent);
-
-        if (responseStreamElement.innerHTML == "") {
-            console.log('empty response');
-            responseStreamElement.closest('.button-container').remove();
-        }
-        console.log("processing final text");
-        responseStreamElement.innerHTML = processMessageText(originalMessageStreamElement.textContent);
-        return
-    }
-
-    //
-    if (!receivingDelimitedId) {
-        currentTextNode.textContent += chunk.replace(/[\[\]]/g, '');
-        //console.log("Added to currentTextNode:", chunk, "Total visible:", currentTextNode.textContent);
-    }
-
-    originalMessageStreamElement.textContent += chunk;
-    processStreamElement.textContent += chunk;
-    console.log("processStreamElement.textContent: ", processStreamElement.textContent);
-
-    // Autoscrolling
-    if (currentTextNode && currentTextNode.parentElement) {
-        const textElement = currentTextNode.parentElement;
-        const rect = textElement.getBoundingClientRect();
-        const containerRect = messageScrollContainer.getBoundingClientRect();
-
-        // If the top of the text element is visible (not above the container), scroll to bottom
-        if (rect.top >= containerRect.top && !scrollingMessages) {
-            messageScrollContainer.scrollTo({ top: messageScrollContainer.scrollHeight, behavior: 'smooth' });
-        }
-    }
-
-    timeout = setTimeout(() => {
-        console.log("Stream timeout reached. Stopping read.");
-        isStreaming = false; // Reset the streaming flag
-        queueAnnouncement(processStreamElement.textContent);
-        //streamContainer = false;
-        console.log("processing final text");
-        console.log("originalMessageStreamElement.textContent: ", originalMessageStreamElement.textContent);
-        responseStreamElement.innerHTML = processMessageText(originalMessageStreamElement.textContent);
-    }, STREAM_TIMEOUT);
+    processChatStream(chunk);
 }
 
-function addObjectIdMenuSpan(id) {
-    const text = processStreamElement.textContent;
-    const bracketRegex = /\[([^\]]+)\]/g;
-    let match;
-    let lastMatch = null;
+function processChatStream(chunk) {
+    // Chat currently shares the adventure stream renderer until it needs
+    // mode-specific parsing.
+    processAdventureStream(chunk, getStreamContext());
+}
 
-    // Find the index of the @@id@@ pattern - use the extracted ID from the regex match
-    const idMatch = text.match(/@@([^@]+)@@/);
-    const extractedId = idMatch ? idMatch[1] : id;
-    const idPattern = `@@${extractedId}@@`;
-    const idIndex = text.indexOf(idPattern);
+function processSimulationStream(chunk) {
+    // Simulation currently shares the adventure stream renderer until it needs
+    // mode-specific parsing.
+    processAdventureStream(chunk, getStreamContext());
+}
 
-    // Find the bracket match where the closing bracket comes before the @@id@@
-    while ((match = bracketRegex.exec(text)) !== null) {
-        const closingBracketIndex = match.index + match[0].length - 1; // Index of ']'
-
-        // Only consider this match if its closing bracket comes before the @@id@@
-        if (closingBracketIndex < idIndex) {
-            lastMatch = match;
-        }
-    }
-
-    console.log("addobject found match, text: ", text, "id: ", id, "idIndex: ", idIndex, "match: ", lastMatch);
-
-    if (!lastMatch) {
-        return;
-    }
-    const objectName = lastMatch[1].trim();
-    const beforeText = text.slice(0, lastMatch.index);
-
-    // Find text after the ID pattern @@id@@
-    const afterIdMatch = text.match(/@@[^@]+@@(.*)$/);
-    let afterText = afterIdMatch ? afterIdMatch[1] : '';
-    afterText = afterText.replace(/[\[\]]/g, '');
-
-    // Set the current text node to only the text before the bracketed name
-    currentTextNode.textContent = beforeText;
-
-    // Create the span HTML string
-    const spanHTML = createWorldFeatureSpan(objectName, id);
-
-    // Create a DOM element from the HTML string
-    const tempNode = document.createElement('p');
-    tempNode.innerHTML = spanHTML;
-    const span = tempNode.firstChild;
-
-    // Insert the span after the current text node
-    if (currentTextNode.nextSibling) {
-        responseStreamElement.insertBefore(span, currentTextNode.nextSibling);
-    } else {
-        responseStreamElement.appendChild(span);
-    }
-
-    // Add any remaining text after the ID and create new text node for future streaming
-    const afterTextNode = document.createTextNode(afterText);
-    responseStreamElement.appendChild(afterTextNode);
-    // Update currentTextNode to point to this new text node for future streaming
-    currentTextNode = afterTextNode;
-
-    console.log('clearing processStreamElement');
-    processStreamElement.textContent = "";
+function getStreamContext() {
+    return {
+        responseStreamElement,
+        processStreamElement,
+        messageScrollContainer,
+        streamTimeout: STREAM_TIMEOUT,
+        setStreamTimeout: value => { timeout = value; },
+        setStreaming: value => { isStreaming = value; },
+        hasReceivedFirstStreamMessage: () => hasReceivedFirstStreamMessage,
+        markFirstStreamMessageReceived: () => { hasReceivedFirstStreamMessage = true; },
+        isScrollingMessages: () => scrollingMessages,
+        queueAnnouncement,
+    };
 }
 
 function createLeftContainer(message, username, userId, characterName, characterId = null, partyId = null, prepend = false,) {
@@ -919,10 +700,6 @@ function handleSetSender(content) {
         responseCharacter = null;
     }
 
-    delimitedId = '';
-    // reset flag that shows currently streaming delimited id
-    receivingDelimitedId = false;
-    previousStreamWord = null;
     const responseCharacterId = content.sender_id;
 
     responseStreamElement = createRightContainer("", responseCharacter, responseCharacterId, false);

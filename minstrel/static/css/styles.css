@@ -565,6 +565,26 @@ body.default-body .input-container {
   max-width: 100%;
 }
 
+.stream-line-fade {
+  display: inline;
+  animation: stream-line-fade-in 520ms ease-out both;
+}
+
+@keyframes stream-line-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .stream-line-fade {
+    animation: none;
+  }
+}
+
 .message-text.nearby-activity-message {
 	padding: .4em;
 }

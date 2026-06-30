@@ -40,7 +40,7 @@ from networking.websocket_routes import route_message
 from networking.websocket_manager import websocket_manager
 #from adventure_endpoints import adventure_router
 import traceback
-from auth.authentication import verify_user
+from auth.authentication import decode_jwt, secret_key
 
 from networking.http_client import http_client
 from auth.auth_client import authenticate
@@ -261,8 +261,13 @@ async def authenticate_websocket(websocket: WebSocket):
     # WebSocket has no response channel for Set-Cookie; sink absorbs any
     # rotated token cookies. Token rotation silently fails here, same as
     # the previous HTTP-call path which also discarded Set-Cookie headers.
-    sink = Response()
-    user_id = await verify_user(websocket, sink)
+    #sink = Response()
+    #user_id = await verify_user(websocket, sink)
+    # WebSocket handshakes cannot apply Set-Cookie headers from refresh-token
+    # rotation. Only authenticate with an already-valid access token here.
+    access_token_cookie = websocket.cookies.get("access_token")
+    access_token_status = decode_jwt(access_token_cookie, secret_key) if access_token_cookie else None
+    user_id = access_token_status["sub"] if access_token_status else None
     if not user_id:
         raise HTTPException(status_code=403, detail="Websocket authentication failed")
     return user_id
