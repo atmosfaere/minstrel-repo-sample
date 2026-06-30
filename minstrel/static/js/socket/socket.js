@@ -7,11 +7,38 @@ let isConnecting = false;
 
 let retryAttempt = 0;
 let retryTimeout = null;
+let socketConnectionRequested = false;
 const MAX_RETRIES = 5;
 const BASE_DELAY_MS = 1000;
 const MAX_DELAY_MS = 30000;
 
+function isPageVisible() {
+    return document.visibilityState !== 'hidden';
+}
+
+function isSocketOpenOrConnecting() {
+    return socket && (
+        socket.readyState === WebSocket.OPEN ||
+        socket.readyState === WebSocket.CONNECTING
+    );
+}
+
+function pausePendingReconnect() {
+    if (!retryTimeout) {
+        return;
+    }
+
+    clearTimeout(retryTimeout);
+    retryTimeout = null;
+    console.log("WebSocket: reconnect paused while page is hidden");
+}
+
 function scheduleReconnect() {
+    if (!isPageVisible()) {
+        console.log("WebSocket: reconnect paused while page is hidden");
+        return;
+    }
+
     if (retryAttempt >= MAX_RETRIES) {
         console.warn(`WebSocket: max retries (${MAX_RETRIES}) reached, giving up`);
         return;
@@ -26,7 +53,30 @@ function scheduleReconnect() {
     }, delay);
 }
 
+function reconnectWhenPageResumes() {
+    if (!socketConnectionRequested || !isPageVisible() || isSocketOpenOrConnecting() || isConnecting) {
+        return;
+    }
+
+    retryAttempt = 0;
+    console.log("WebSocket: reconnecting after page resumed");
+    makeSocket();
+}
+
+document.addEventListener('visibilitychange', () => {
+    if (isPageVisible()) {
+        reconnectWhenPageResumes();
+    } else {
+        pausePendingReconnect();
+    }
+});
+
+window.addEventListener('focus', reconnectWhenPageResumes);
+window.addEventListener('pageshow', reconnectWhenPageResumes);
+
 export async function makeSocket() {
+    socketConnectionRequested = true;
+
     // Cancel any pending retry — connect immediately
     if (retryTimeout) {
         clearTimeout(retryTimeout);
