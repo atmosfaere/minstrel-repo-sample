@@ -431,12 +431,17 @@ export async function getCharacterList() {
 
 export async function saveDocumentText(tagOrId, documentText) {
     const url = `${baseUrl}/save-document-text`;
-    let data = {
-        world: world,
-        tag: tagOrId,
-        document_text: documentText
-    };
     try {
+        if (typeof tagOrId !== 'string' || typeof documentText !== 'string') {
+            throw new TypeError('Document tag and text must be strings.');
+        }
+
+        const data = {
+            world: world,
+            tag: tagOrId,
+            document_text: documentText
+        };
+
         const response = await fetch(url, {
             method: "POST",
             headers: {

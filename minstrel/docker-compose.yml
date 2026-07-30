@@ -13,4 +13,5 @@ services:
     restart: unless-stopped
 
 volumes:
-  elasticsearch_data: 
+  elasticsearch_data:
+    name: minstrel_elasticsearch_data

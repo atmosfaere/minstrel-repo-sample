@@ -116,8 +116,12 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
         #response.headers['Permissions-Policy'] = 'geolocation=(self)'
         return response
 
-#ALLOWED_ORIGINS = ["https://minstrelai.com"]
-ALLOWED_ORIGINS = ["https://minstrelai.com", "http://127.0.0.1:5004"]
+ALLOWED_ORIGINS = [
+    "https://minstrelai.com",
+    "https://www.minstrelai.com",
+    "http://127.0.0.1:5004",
+    "http://localhost:5004",
+]
 
 
 @asynccontextmanager
@@ -232,7 +236,7 @@ async def home(request: Request, response: Response):
 
     nonce = request.state.nonce
     timestamp = int(time.time())
-    template_response = templates.TemplateResponse("index.html", {"request": request, "nonce": nonce, "timestamp": timestamp})
+    template_response = templates.TemplateResponse(request, "index.html", {"nonce": nonce, "timestamp": timestamp})
     
     # Add cache control headers for HTML files
     template_response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
@@ -247,7 +251,7 @@ def invite_page(request: Request):
     nonce = request.state.nonce
     timestamp = int(time.time())
     # Return the same index.html to let the SPA handle the route
-    template_response = templates.TemplateResponse("index.html", {"request": request, "nonce": nonce, "timestamp": timestamp})
+    template_response = templates.TemplateResponse(request, "index.html", {"nonce": nonce, "timestamp": timestamp})
     
     # Add cache control headers for HTML files
     template_response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
@@ -274,8 +278,11 @@ async def authenticate_websocket(websocket: WebSocket):
 
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
-    #if "origin" in request.headers and request.headers["origin"] in ALLOWED_ORIGINS:
     try:
+        origin = websocket.headers.get("origin")
+        if origin not in ALLOWED_ORIGINS:
+            raise HTTPException(status_code=403, detail="Websocket origin is not allowed")
+
         user_id = await authenticate_websocket(websocket)
 
         await websocket.accept()
@@ -350,7 +357,7 @@ async def get_page(request: Request, page_name: str):
 
     try:
         timestamp = int(time.time())
-        response = templates.TemplateResponse(f"{page_name}.html", {"request": request, "timestamp": timestamp})
+        response = templates.TemplateResponse(request, f"{page_name}.html", {"timestamp": timestamp})
         
         # Add cache control headers for HTML files
         response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"

@@ -228,18 +228,15 @@ async def get_new_location(world_id: str, user_id=Depends(authenticate)):
 
 @router.get("/get-new-object")
 async def get_new_object(world_id: str, user_id=Depends(authenticate)):
-    object_tag = await create_object(world_id, '')
-    return {"tag": object_tag}
+    return await create_object(world_id, '')
 
 @router.get("/get-new-document")
 async def get_new_document(world_id: str, user_id=Depends(authenticate)):
-    document_tag= await create_document(world_id, '', '')
-    return {"tag": document_tag}
+    return await create_document(world_id, '', '')
 
 @router.get("/get-new-container")
 async def get_new_container(world_id: str, user_id=Depends(authenticate)):
-    container_tag = await create_container
-    return {"tag": container_tag}
+    return await create_container(world_id, '')
 
 @router.post("/add-character-summary")
 async def add_character_summary(request: Request, user_id=Depends(authenticate)):

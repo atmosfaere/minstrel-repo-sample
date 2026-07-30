@@ -209,6 +209,7 @@ async def get_world(world):
 
     for room_id in worlds[world].rooms:
         worlds[world].rooms[room_id].connections = []
+        worlds[world].rooms[room_id].active_users = []
         worlds[world].rooms[room_id].streaming = False
         worlds[world].rooms[room_id].current_stream_text = ""
 
@@ -376,7 +377,6 @@ async def add_player_character(world, user_id, character_name, character_summary
     character = {
         "name": character_name,
         "summary": character_summary,
-        #"inventory": {},
         "objects": {},
         "type": "player",
         "type_default": "player",
@@ -604,6 +604,9 @@ async def backup_user(world, user_id):
 async def add_room_connection(websocket, world, room_id, user_id, character_id):
     room = worlds[world].rooms[room_id]
     room.setdefault('connections', [])
+    room.setdefault('characters', [])
+    room.setdefault('users', [])
+    room.setdefault('active_users', [])
     room['connections'].append({
         'websocket': websocket,
         'user_id': user_id,

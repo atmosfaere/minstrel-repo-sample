@@ -127,7 +127,8 @@ export async function makeSocket() {
 
     const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
     const wsHost = window.location.host; // 'host' includes hostname and port if port is specified
-    const wsPath = window.location.protocol === 'https:' ? 'wss' : 'ws';
+    //const wsPath = window.location.protocol === 'https:' ? 'wss' : 'ws';
+    const wsPath = 'ws';
     const wsUrl = `${wsProtocol}//${wsHost}/${wsPath}`;
 
     try {

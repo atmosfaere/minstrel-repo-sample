@@ -14,7 +14,7 @@ services:
       - "9200:9200"
       - "9300:9300"
     volumes:
-      - /esdata:/usr/share/elasticsearch/data
+      - elasticsearch_data:/usr/share/elasticsearch/data
     restart: unless-stopped
     ulimits:
       memlock:
@@ -24,4 +24,6 @@ services:
         soft: 65536
         hard: 65536
 
-volumes: {}
+volumes:
+  elasticsearch_data:
+    name: minstrel_elasticsearch_data

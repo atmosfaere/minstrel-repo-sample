@@ -206,7 +206,8 @@ async def delete_path(bucket: str, prefix: str, key: str):
         os.remove(rm_path)
         logger.info(f"File deleted: {path}")
     elif os.path.isdir(rm_path):
-        shutil.rmtree(rm_path, onexc=on_rm_error)
+        shutil.rmtree(rm_path, onerror=on_rm_error)
+        #shutil.rmtree(rm_path, onexc=on_rm_error)
         logger.info(f"Directory deleted: {path}")
     else:
         raise OSError(f"Unknown file type: {path}")
@@ -271,7 +272,8 @@ async def replace_nested_dict(bucket: str, prefix: str, dictionary: dict):
                             raise Exception(f"rmdir failed: {result.stderr}")
                     else:#end
                         # shutil.rmtree removes the entire directory tree recursively
-                        shutil.rmtree(rm_path, onexc=on_rm_error)
+                        shutil.rmtree(rm_path, onerror=on_rm_error)
+                        #shutil.rmtree(rm_path, onexc=on_rm_error)
                     logger.info(f"Deleted directory tree before storing: {prefix} (full path: {dir_path})")
             except Exception as e:
                 logger.warning(f"Error deleting directory {prefix}: {e} When replacing nested_dict")
