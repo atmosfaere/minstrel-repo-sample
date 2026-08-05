@@ -911,8 +911,8 @@ async def copy_world(request: Request, user_id=Depends(authenticate)):
     worlds[new_world_id] = copy.deepcopy(dict(worlds[original_world_id]))
 
     # Reset user-specific data, only if want to wipe parties
-    #worlds[new_world_id]['users'] = {}
-    #worlds[new_world_id]['rooms'] = {}
+    worlds[new_world_id]['users'] = {}
+    worlds[new_world_id]['rooms'] = {}
     
     # Update world info for the new copy
     world_info = json.loads(worlds[new_world_id]['info'])

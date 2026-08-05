@@ -41,3 +41,8 @@ Thumbs.db
 
 # Minstrel data directory
 minstrel_data/
+
+# Local dev / test fixtures
+test ereader rendering/
+test text pages/
+test_processing/
